@@ -1,0 +1,43 @@
+{
+  "home": {
+    "hero_badge": "AI-Powered Citizen Scheme Assistance",
+    "hero_title": "Discover & Assess Government Schemes Tailored For You",
+    "hero_subtitle": "Understand eligibility criteria, get explainable rule breakdowns, required document guidance, and direct access to official application sources.",
+    "popular_searches": "Popular searches:",
+    "cat_farmer": "Farmers & Agriculture",
+    "cat_farmer_desc": "Income support, crop insurance, fertilizer subsidy, credit cards & solar pump schemes.",
+    "cat_edu": "Education & Students",
+    "cat_edu_desc": "Post-matric aid, merit scholarships, hostel allowances, and subsidized education loans.",
+    "cat_women": "Women & Child Welfare",
+    "cat_women_desc": "Maternal healthcare, girl child savings, financial empowerment, and self-help group aid.",
+    "how_it_works_title": "How GovScheme AI Assists You",
+    "how_it_works_subtitle": "Transparent, rule-based, and explainable assistance to help Indian citizens access welfare benefits.",
+    "step1_title": "Personal Circumstances Profile",
+    "step1_desc": "Input your state, age, occupation, income bracket, and category to analyze matching schemes.",
+    "step2_title": "Deterministic Rule Engine",
+    "step2_desc": "Our deterministic rule engine compares your attributes against official rules with clear explanations.",
+    "step3_title": "Required Document Guidance",
+    "step3_desc": "Review mandatory certificates and documents needed before visiting official government application portals.",
+    "featured_title": "Featured Government Schemes",
+    "featured_subtitle": "Active central and state welfare initiatives open for application.",
+    "explore_all": "Explore All Schemes",
+    "loading": "Loading schemes..."
+  },
+  "login": {
+    "title": "Login to Your Account",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Login",
+    "no_account": "Don't have an account?",
+    "register": "Register here"
+  },
+  "navbar": {
+    "home": "Home",
+    "schemes": "All Schemes",
+    "check_eligibility": "Check Eligibility",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  }
+}
