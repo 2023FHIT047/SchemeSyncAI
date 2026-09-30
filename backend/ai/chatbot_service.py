@@ -57,7 +57,7 @@ User Query: {user_query}
             except Exception as e:
                 logger.warning(f"Gemini API call failed: {e}. Falling back to structured response.")
 
-        # Fallback response when GEMINI_API_KEY is not configured or fails
+        # Fallback response when GEMINI_API_KEY is not configured or fails h
         if context_schemes and len(context_schemes) > 0:
             scheme_list = ", ".join([s.scheme_name for s in context_schemes[:3]])
             fallback = f"Based on your query '{user_query}', here are relevant schemes from our database: {scheme_list}. Please view their full details for official application links and eligibility criteria."
