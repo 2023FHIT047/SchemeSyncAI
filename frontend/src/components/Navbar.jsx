@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Sparkles } from 'lucide-react';
+import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const Navbar = () => {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    setMobileOpen(false);
     navigate('/');
   };
 
@@ -27,22 +29,23 @@ export const Navbar = () => {
             <span>Government of India Welfare Assistance Initiative</span>
           </div>
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', alignItems: 'center' }}>
-            <span>
-              Language: 
-              <button 
-                onClick={() => changeLanguage('en')} 
-                style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: i18n.language === 'en' ? 'bold' : 'normal', textDecoration: i18n.language === 'en' ? 'underline' : 'none' }}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              Language:
+              <button
+                onClick={() => changeLanguage('en')}
+                style={{ background: 'none', border: 'none', color: i18n.language === 'en' ? '#00a884' : '#94a3b8', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', padding: '0.1rem 0.3rem' }}
               >
-                English
-              </button> | 
-              <button 
-                onClick={() => changeLanguage('hi')} 
-                style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: i18n.language === 'hi' ? 'bold' : 'normal', textDecoration: i18n.language === 'hi' ? 'underline' : 'none' }}
+                EN
+              </button>
+              <span style={{ color: '#475569' }}>|</span>
+              <button
+                onClick={() => changeLanguage('hi')}
+                style={{ background: 'none', border: 'none', color: i18n.language === 'hi' ? '#00a884' : '#94a3b8', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', padding: '0.1rem 0.3rem' }}
               >
-                हिंदी
+                हिं
               </button>
             </span>
-            <span>Helpdesk: 1800-111-555</span>
+            <span style={{ color: '#64748b' }}>Helpdesk: 1800-111-555</span>
           </div>
         </div>
       </div>
@@ -59,14 +62,18 @@ export const Navbar = () => {
             </div>
           </Link>
 
-          <ul className="nav-links">
+          <button className="nav-toggle" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X style={{ width: '1.5rem', height: '1.5rem' }} /> : <Menu style={{ width: '1.5rem', height: '1.5rem' }} />}
+          </button>
+
+          <ul className={`nav-links ${mobileOpen ? 'open' : ''}`}>
             <li>
-              <Link to="/schemes" className="nav-link">
+              <Link to="/schemes" className="nav-link" onClick={() => setMobileOpen(false)}>
                 {t('navbar.schemes')}
               </Link>
             </li>
             <li>
-              <Link to="/eligibility-checker" className="nav-link">
+              <Link to="/eligibility-checker" className="nav-link" onClick={() => setMobileOpen(false)}>
                 <CheckCircle2 style={{ width: '1rem', height: '1rem', color: 'var(--accent-emerald)' }} />
                 {t('navbar.check_eligibility')}
               </Link>
@@ -74,13 +81,13 @@ export const Navbar = () => {
             {user ? (
               <>
                 <li>
-                  <Link to="/profile" className="nav-link">
+                  <Link to="/profile" className="nav-link" onClick={() => setMobileOpen(false)}>
                     <User style={{ width: '1rem', height: '1rem' }} />
                     Profile
                   </Link>
                 </li>
                 <li>
-                  <Link to="/dashboard" className="nav-link">
+                  <Link to="/dashboard" className="nav-link" onClick={() => setMobileOpen(false)}>
                     <Bookmark style={{ width: '1rem', height: '1rem' }} />
                     {t('navbar.dashboard')}
                   </Link>
@@ -100,11 +107,11 @@ export const Navbar = () => {
             ) : (
               <li>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Link to="/login" className="btn btn-outline-navy btn-sm">
+                  <Link to="/login" className="btn btn-outline-navy btn-sm" onClick={() => setMobileOpen(false)}>
                     <LogIn style={{ width: '0.85rem', height: '0.85rem' }} />
                     {t('navbar.login')}
                   </Link>
-                  <Link to="/register" className="btn btn-primary btn-sm">
+                  <Link to="/register" className="btn btn-primary btn-sm" onClick={() => setMobileOpen(false)}>
                     {t('navbar.register')}
                   </Link>
                 </div>

@@ -41,7 +41,7 @@ export const SchemeListPage = () => {
   const handleFilterChange = (key, value) => {
     const updated = { ...filters, [key]: value };
     setFilters(updated);
-    
+
     const newParams = new URLSearchParams();
     Object.keys(updated).forEach(k => {
       if (updated[k]) newParams.set(k, updated[k]);
@@ -61,44 +61,41 @@ export const SchemeListPage = () => {
 
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Government Scheme Directory</h1>
-        <p style={{ color: 'var(--gray-600)' }}>
-          Browse verified central and state welfare initiatives across Farmers, Education, and Women & Child domains.
-        </p>
+      <div className="page-header">
+        <h1>Government Scheme Directory</h1>
+        <p>Browse verified central and state welfare initiatives across Farmers, Education, and Women & Child domains.</p>
       </div>
 
       <div style={{ marginBottom: '2rem' }}>
         <SearchBar onSearch={handleSearchSubmit} initialValue={filters.search} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '2rem', alignItems: 'flex-start' }}>
-        {/* Sidebar Filters */}
+      <div className="scheme-list-layout">
         <FilterSidebar filters={filters} onFilterChange={handleFilterChange} onReset={handleReset} />
 
-        {/* Scheme List Grid */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--gray-600)', fontWeight: 500 }}>
-              Showing <strong>{schemes.length}</strong> government schemes
+            <span style={{ fontSize: '0.875rem', color: 'var(--gray-600)', fontWeight: 500 }}>
+              Showing <strong style={{ color: 'var(--gray-900)' }}>{schemes.length}</strong> scheme{schemes.length !== 1 ? 's' : ''}
             </span>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
-              Loading government schemes...
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p style={{ color: 'var(--gray-500)', fontSize: '0.9rem' }}>Loading government schemes...</p>
             </div>
           ) : schemes.length === 0 ? (
-            <div style={{ background: 'white', padding: '3rem', borderRadius: 'var(--radius-md)', textAlign: 'center', border: '1px solid var(--gray-200)' }}>
-              <Layers style={{ width: '3rem', height: '3rem', color: 'var(--gray-400)', marginBottom: '1rem' }} />
-              <h3>No schemes match your selected criteria</h3>
-              <p style={{ color: 'var(--gray-600)', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+            <div className="empty-state">
+              <Layers style={{ width: '3rem', height: '3rem', color: 'var(--gray-300)', marginBottom: '1rem' }} />
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>No schemes match your criteria</h3>
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                 Try resetting filters or searching with different keywords.
               </p>
               <button onClick={handleReset} className="btn btn-secondary btn-sm">Reset All Filters</button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            <div className="scheme-grid">
               {schemes.map(scheme => (
                 <SchemeCard key={scheme.scheme_id} scheme={scheme} />
               ))}

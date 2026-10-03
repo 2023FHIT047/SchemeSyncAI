@@ -4,9 +4,9 @@ import { schemeApi } from '../api/schemeApi';
 import { eligibilityApi } from '../api/eligibilityApi';
 import { useAuth } from '../context/AuthContext';
 import { EligibilityBadge } from '../components/EligibilityBadge';
-import { 
-  Building2, ExternalLink, ShieldCheck, FileCheck, CheckCircle2, 
-  XCircle, AlertTriangle, ArrowLeft, Bookmark, PhoneCall, Mail, Calendar 
+import {
+  Building2, ExternalLink, ShieldCheck, FileCheck, ArrowLeft, Bookmark,
+  PhoneCall, Mail, MapPin, Tag, Banknote, Calendar, Globe
 } from 'lucide-react';
 
 export const SchemeDetailPage = () => {
@@ -59,98 +59,170 @@ export const SchemeDetailPage = () => {
     }
   };
 
+  const getCategoryClass = (cat) => {
+    const map = {
+      FARMER: 'badge-farmer', EDUCATION: 'badge-education', WOMEN_CHILD: 'badge-women',
+      HEALTHCARE: 'badge-healthcare', EMPLOYMENT: 'badge-employment', SKILL_DEV: 'badge-skill',
+      HOUSING: 'badge-housing', SENIOR_CITIZEN: 'badge-senior'
+    };
+    return map[cat] || 'badge-central';
+  };
+
   if (loading) {
-    return <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>Loading scheme details...</div>;
+    return (
+      <div className="container">
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p style={{ color: 'var(--gray-500)', fontSize: '0.9rem' }}>Loading scheme details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!scheme) {
-    return <div className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>Scheme not found.</div>;
+    return (
+      <div className="container">
+        <div className="empty-state" style={{ marginTop: '3rem' }}>
+          <h3>Scheme not found</h3>
+          <p style={{ color: 'var(--gray-600)', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+            The scheme you're looking for doesn't exist or has been removed.
+          </p>
+          <Link to="/schemes" className="btn btn-primary">Browse All Schemes</Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem' }}>
-      <Link to="/schemes" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--gray-600)', marginBottom: '1.5rem', fontSize: '0.9rem', fontWeight: 500 }}>
+    <div className="container" style={{ padding: '2rem 1.5rem 3rem' }}>
+      <Link to="/schemes" className="back-link">
         <ArrowLeft style={{ width: '1rem', height: '1rem' }} /> Back to Scheme Directory
       </Link>
 
-      {/* Header Banner */}
-      <div style={{ background: 'white', borderRadius: 'var(--radius-md)', padding: '2rem', border: '1px solid var(--gray-200)', boxShadow: 'var(--shadow-sm)', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+      {/* Header Card */}
+      <div className="scheme-detail-header">
+        <div className="scheme-detail-header-top">
           <div>
-            <span className={`scheme-badge badge-farmer`} style={{ marginBottom: '0.75rem', display: 'inline-block' }}>
+            <span className={`scheme-badge ${getCategoryClass(scheme.category)}`}>
               {scheme.category_display || scheme.category}
             </span>
-            <h1 style={{ fontSize: '2.1rem', color: 'var(--primary-900)', lineHeight: '1.25' }}>{scheme.scheme_name}</h1>
-            <p style={{ color: 'var(--gray-600)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.95rem' }}>
-              <Building2 style={{ width: '1rem', height: '1rem', color: 'var(--primary-700)' }} /> {scheme.ministry}
+            <h1 className="scheme-detail-title">{scheme.scheme_name}</h1>
+            <p className="scheme-detail-ministry">
+              <Building2 style={{ width: '1rem', height: '1rem', color: 'var(--primary-600)' }} />
+              {scheme.ministry}
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className="scheme-detail-actions">
             <button onClick={handleBookmarkToggle} className="btn btn-secondary">
               <Bookmark style={{ width: '1rem', height: '1rem', fill: isSaved ? '#d97706' : 'none', color: isSaved ? '#d97706' : 'inherit' }} />
               {isSaved ? 'Saved' : 'Save Scheme'}
             </button>
             <a href={scheme.application_link} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-              Apply on Official Portal <ExternalLink style={{ width: '1rem', height: '1rem' }} />
+              Apply Now <ExternalLink style={{ width: '0.9rem', height: '0.9rem' }} />
             </a>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1.5rem', borderTop: '1px solid var(--gray-200)', paddingTop: '1rem', marginTop: '1.5rem', flexWrap: 'wrap', fontSize: '0.875rem', color: 'var(--gray-700)' }}>
-          <div><strong>State:</strong> {scheme.applicable_state}</div>
-          <div><strong>Type:</strong> {scheme.scheme_type_display || scheme.scheme_type}</div>
-          <div><strong>Benefit Mode:</strong> {scheme.benefit_type_display || scheme.benefit_type}</div>
-          <div><strong>Application Mode:</strong> {scheme.application_mode}</div>
-          {scheme.launch_year && <div><strong>Launch Year:</strong> {scheme.launch_year}</div>}
+        {/* Metadata Grid */}
+        <div className="scheme-meta-grid">
+          <div className="scheme-meta-item">
+            <span className="scheme-meta-label">Applicable State</span>
+            <span className="scheme-meta-value" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <MapPin style={{ width: '0.85rem', height: '0.85rem', color: 'var(--gray-400)' }} />
+              {scheme.applicable_state}
+            </span>
+          </div>
+          <div className="scheme-meta-item">
+            <span className="scheme-meta-label">Scheme Type</span>
+            <span className="scheme-meta-value" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Tag style={{ width: '0.85rem', height: '0.85rem', color: 'var(--gray-400)' }} />
+              {scheme.scheme_type_display || scheme.scheme_type}
+            </span>
+          </div>
+          <div className="scheme-meta-item">
+            <span className="scheme-meta-label">Benefit Mode</span>
+            <span className="scheme-meta-value" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Banknote style={{ width: '0.85rem', height: '0.85rem', color: 'var(--gray-400)' }} />
+              {scheme.benefit_type_display || scheme.benefit_type}
+            </span>
+          </div>
+          <div className="scheme-meta-item">
+            <span className="scheme-meta-label">Application Mode</span>
+            <span className="scheme-meta-value" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Globe style={{ width: '0.85rem', height: '0.85rem', color: 'var(--gray-400)' }} />
+              {scheme.application_mode}
+            </span>
+          </div>
+          {scheme.launch_year && (
+            <div className="scheme-meta-item">
+              <span className="scheme-meta-label">Launch Year</span>
+              <span className="scheme-meta-value" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Calendar style={{ width: '0.85rem', height: '0.85rem', color: 'var(--gray-400)' }} />
+                {scheme.launch_year}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Overview & Objective */}
-          <div style={{ background: 'white', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-            <h2 style={{ fontSize: '1.3rem', marginBottom: '1rem' }}>Scheme Description & Objective</h2>
-            <p style={{ color: 'var(--gray-800)', lineHeight: '1.7', marginBottom: '1.25rem' }}>{scheme.detailed_description || scheme.short_description}</p>
+      {/* Main Content Grid */}
+      <div className="scheme-detail-layout">
+        {/* Left Column - Main Content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+
+          {/* Description & Objective */}
+          <div className="scheme-section-card">
+            <h2 className="scheme-section-title">
+              <FileCheck style={{ width: '1.15rem', height: '1.15rem', color: 'var(--primary-600)' }} />
+              Scheme Description & Objective
+            </h2>
+            <p style={{ color: 'var(--gray-700)', lineHeight: 1.75, fontSize: '0.925rem', marginBottom: scheme.objective ? 0 : 0 }}>
+              {scheme.detailed_description || scheme.short_description}
+            </p>
             {scheme.objective && (
-              <div style={{ background: 'var(--primary-50)', padding: '1rem 1.25rem', borderRadius: '8px', borderLeft: '4px solid var(--primary-600)' }}>
-                <h4 style={{ color: 'var(--primary-900)', fontSize: '0.95rem', marginBottom: '0.35rem' }}>Core Objective</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--gray-700)', margin: 0 }}>{scheme.objective}</p>
+              <div className="objective-callout">
+                <h4>Core Objective</h4>
+                <p>{scheme.objective}</p>
               </div>
             )}
           </div>
 
           {/* Benefits */}
-          <div style={{ background: 'white', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-            <h2 style={{ fontSize: '1.3rem', marginBottom: '1rem' }}>Scheme Benefits & Financial Assistance</h2>
-            <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '1.25rem', borderRadius: '8px', color: '#065f46', marginBottom: '1rem' }}>
-              <strong style={{ display: 'block', fontSize: '1.1rem', marginBottom: '0.25rem' }}>
-                Key Benefit: {scheme.benefit_amount || 'Direct Government Support'}
-              </strong>
-              <p style={{ fontSize: '0.925rem', margin: 0 }}>{scheme.benefits}</p>
+          <div className="scheme-section-card">
+            <h2 className="scheme-section-title">
+              <Banknote style={{ width: '1.15rem', height: '1.15rem', color: 'var(--accent-emerald)' }} />
+              Benefits & Financial Assistance
+            </h2>
+            <div className="benefit-highlight">
+              <p className="benefit-amount">
+                {scheme.benefit_amount || 'Direct Government Support'}
+              </p>
+              <p className="benefit-desc">{scheme.benefits}</p>
             </div>
           </div>
 
-          {/* Explainable Eligibility Criteria Breakdown */}
-          <div style={{ background: 'white', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Structured Eligibility Rules</h2>
+          {/* Eligibility Rules */}
+          <div className="scheme-section-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--gray-100)', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <h2 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.6rem', margin: 0 }}>
+                <ShieldCheck style={{ width: '1.15rem', height: '1.15rem', color: 'var(--primary-600)' }} />
+                Eligibility Criteria
+              </h2>
               {eligibilityResult && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Your Result:</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-600)' }}>Your Result:</span>
                   <EligibilityBadge status={eligibilityResult.is_eligible ? 'PASSED' : 'FAILED'} text={eligibilityResult.is_eligible ? 'Eligible' : 'Not Eligible'} />
                 </div>
               )}
             </div>
 
             {user && eligibilityResult && (
-              <div style={{ background: eligibilityResult.is_eligible ? '#ecfdf5' : '#fff1f2', border: `1px solid ${eligibilityResult.is_eligible ? '#a7f3d0' : '#fecdd3'}`, padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <h4 style={{ color: eligibilityResult.is_eligible ? '#047857' : '#991b1b', fontSize: '0.95rem', marginBottom: '0.4rem' }}>
-                  {eligibilityResult.is_eligible ? '🎉 You meet all mandatory conditions' : '⚠️ Unmet condition breakdown for your profile'}
+              <div className={`eligibility-banner ${eligibilityResult.is_eligible ? 'eligibility-banner-pass' : 'eligibility-banner-fail'}`}>
+                <h4 style={{ color: eligibilityResult.is_eligible ? '#047857' : '#991b1b' }}>
+                  {eligibilityResult.is_eligible ? 'You meet all mandatory conditions' : 'Unmet conditions for your profile'}
                 </h4>
-                <p style={{ fontSize: '0.875rem', margin: 0, color: 'var(--gray-800)' }}>{eligibilityResult.summary}</p>
+                <p>{eligibilityResult.summary}</p>
               </div>
             )}
 
@@ -159,27 +231,33 @@ export const SchemeDetailPage = () => {
                 {scheme.eligibility_rules.map((rule) => {
                   let evalStatus = null;
                   if (eligibilityResult) {
-                    const match = eligibilityResult.matched_conditions.find(m => m.rule_id === rule.id);
-                    const fail = eligibilityResult.failed_conditions.find(f => f.rule_id === rule.id);
-                    const miss = eligibilityResult.missing_information.find(ms => ms.rule_id === rule.id);
+                    const match = eligibilityResult.matched_conditions?.find(m => m.rule_id === rule.id);
+                    const fail = eligibilityResult.failed_conditions?.find(f => f.rule_id === rule.id);
+                    const miss = eligibilityResult.missing_information?.find(ms => ms.rule_id === rule.id);
                     if (match) evalStatus = 'PASSED';
                     else if (fail) evalStatus = 'FAILED';
                     else if (miss) evalStatus = 'MISSING_INFO';
                   }
 
                   return (
-                    <div key={rule.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1rem', background: 'var(--gray-50)', borderRadius: '8px', border: '1px solid var(--gray-200)' }}>
-                      <div>
-                        <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--gray-900)' }}>{rule.description}</strong>
-                        <span style={{ fontSize: '0.775rem', color: 'var(--gray-500)' }}>
-                          Condition: <code>{rule.attribute} {rule.operator} {rule.value}</code>
+                    <div key={rule.id} className="eligibility-rule-item">
+                      <div className="eligibility-rule-info">
+                        <strong className="eligibility-rule-desc">{rule.description}</strong>
+                        <span className="eligibility-rule-condition">
+                          {rule.attribute} {rule.operator} {rule.value}
                         </span>
                       </div>
                       <div>
                         {evalStatus ? (
                           <EligibilityBadge status={evalStatus} />
                         ) : (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', background: 'white', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid var(--gray-300)' }}>
+                          <span style={{
+                            fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase',
+                            color: rule.is_mandatory ? 'var(--gray-700)' : 'var(--gray-500)',
+                            background: rule.is_mandatory ? 'var(--gray-100)' : 'white',
+                            padding: '0.25rem 0.6rem', borderRadius: '9999px',
+                            border: `1px solid ${rule.is_mandatory ? 'var(--gray-300)' : 'var(--gray-200)'}`
+                          }}>
                             {rule.is_mandatory ? 'Mandatory' : 'Optional'}
                           </span>
                         )}
@@ -189,81 +267,139 @@ export const SchemeDetailPage = () => {
                 })}
               </div>
             ) : (
-              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem' }}>Open for general citizens meeting standard state residency guidelines.</p>
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                Open for general citizens meeting standard state residency guidelines.
+              </p>
             )}
           </div>
 
-          {/* Required Documents Guidance */}
-          <div style={{ background: 'white', padding: '1.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-            <h2 style={{ fontSize: '1.3rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FileCheck style={{ width: '1.25rem', height: '1.25rem', color: 'var(--accent-emerald)' }} />
-              Required Document Checklist
+          {/* Required Documents */}
+          <div className="scheme-section-card">
+            <h2 className="scheme-section-title">
+              <FileCheck style={{ width: '1.15rem', height: '1.15rem', color: 'var(--accent-emerald)' }} />
+              Required Documents
             </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--gray-600)', marginBottom: '1.25rem' }}>
-              Ensure you have the following valid documents ready before proceeding to the official government application portal.
+            <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              Keep these documents ready before applying on the official portal.
             </p>
 
             {scheme.required_documents && scheme.required_documents.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {scheme.required_documents.map(doc => (
-                  <div key={doc.id} style={{ padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid var(--gray-200)', background: 'white' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <strong style={{ fontSize: '0.925rem', color: 'var(--gray-900)' }}>📄 {doc.document_name}</strong>
-                      <span style={{ fontSize: '0.725rem', fontWeight: 600, color: doc.is_mandatory ? '#b91c1c' : '#047857', background: doc.is_mandatory ? '#fee2e2' : '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                  <div key={doc.id} className="doc-checklist-item">
+                    <div className="doc-checklist-header">
+                      <span className="doc-checklist-name">
+                        <FileCheck style={{ width: '0.9rem', height: '0.9rem', color: 'var(--gray-400)' }} />
+                        {doc.document_name}
+                      </span>
+                      <span className={`doc-checklist-badge ${doc.is_mandatory ? 'doc-mandatory' : 'doc-optional'}`}>
                         {doc.is_mandatory ? 'Mandatory' : 'Optional'}
                       </span>
                     </div>
-                    {doc.description && <p style={{ fontSize: '0.825rem', color: 'var(--gray-600)', margin: 0 }}>{doc.description}</p>}
+                    {doc.description && <p className="doc-checklist-desc">{doc.description}</p>}
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ color: 'var(--gray-600)' }}>Aadhaar Card and Bank Passbook required for general verification.</p>
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem' }}>
+                Aadhaar Card and Bank Passbook required for general verification.
+              </p>
             )}
           </div>
-
         </div>
 
-        {/* Right Sidebar - Official Links & Helpline */}
+        {/* Right Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Official Government Direct Links Box */}
-          <div style={{ background: 'var(--primary-900)', color: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--primary-800)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-emerald)', fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.75rem' }}>
-              <ShieldCheck style={{ width: '1.25rem', height: '1.25rem' }} /> Official Application Portal
+
+          {/* Official Portal CTA */}
+          <div className="scheme-sidebar-dark">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-emerald)', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.85rem' }}>
+              <ShieldCheck style={{ width: '1.2rem', height: '1.2rem' }} />
+              Official Application Portal
             </div>
-            <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-              Submit your formal application directly on the government website:
+            <p style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              Submit your application directly through the verified government website.
             </p>
 
             <a href={scheme.application_link} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%', marginBottom: '0.75rem' }}>
-              Go to Official Portal <ExternalLink style={{ width: '1rem', height: '1rem' }} />
+              Go to Official Portal <ExternalLink style={{ width: '0.9rem', height: '0.9rem' }} />
             </a>
 
             {scheme.official_website && (
-              <a href={scheme.official_website} target="_blank" rel="noopener noreferrer" className="btn btn-outline-navy btn-sm" style={{ width: '100%', fontSize: '0.8rem' }}>
-                Visit Nodal Ministry Website
+              <a href={scheme.official_website} target="_blank" rel="noopener noreferrer" className="btn btn-outline-navy btn-sm" style={{ width: '100%' }}>
+                Visit Ministry Website
               </a>
             )}
           </div>
 
-          {/* Helpline & Support */}
-          <div style={{ background: 'white', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Government Helpline & Contact</h3>
+          {/* Helpline & Contact */}
+          <div className="scheme-sidebar-card">
+            <h3 style={{ fontSize: '0.95rem', marginBottom: '1rem', fontWeight: 700 }}>
+              Helpline & Contact
+            </h3>
             {scheme.helpline && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                <PhoneCall style={{ width: '1rem', height: '1rem', color: 'var(--accent-emerald-dark)' }} />
-                <span>Toll-Free: <strong>{scheme.helpline}</strong></span>
+              <div className="helpline-item">
+                <div className="helpline-icon" style={{ background: '#ecfdf5' }}>
+                  <PhoneCall style={{ width: '0.9rem', height: '0.9rem', color: 'var(--accent-emerald-dark)' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--gray-500)', display: 'block' }}>Toll-Free</span>
+                  <strong style={{ fontSize: '0.9rem' }}>{scheme.helpline}</strong>
+                </div>
               </div>
             )}
             {scheme.email && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                <Mail style={{ width: '1rem', height: '1rem', color: 'var(--primary-700)' }} />
-                <span>{scheme.email}</span>
+              <div className="helpline-item">
+                <div className="helpline-icon" style={{ background: 'var(--primary-50)' }}>
+                  <Mail style={{ width: '0.9rem', height: '0.9rem', color: 'var(--primary-700)' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--gray-500)', display: 'block' }}>Email</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{scheme.email}</span>
+                </div>
               </div>
+            )}
+            {!scheme.helpline && !scheme.email && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>
+                Contact information available on the official portal.
+              </p>
             )}
           </div>
 
+          {/* Quick Eligibility Status (for logged-in users) */}
+          {user && (
+            <div className="scheme-sidebar-card">
+              <h3 style={{ fontSize: '0.95rem', marginBottom: '1rem', fontWeight: 700 }}>
+                Your Eligibility Status
+              </h3>
+              {evaluating ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--gray-500)', fontSize: '0.85rem' }}>
+                  <div className="loading-spinner" style={{ width: '1.25rem', height: '1.25rem', borderWidth: '2px' }}></div>
+                  Evaluating...
+                </div>
+              ) : eligibilityResult ? (
+                <div>
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <EligibilityBadge
+                      status={eligibilityResult.is_eligible ? 'PASSED' : 'FAILED'}
+                      text={eligibilityResult.is_eligible ? 'You are Eligible' : 'Not Eligible'}
+                    />
+                  </div>
+                  {eligibilityResult.matched_conditions?.length > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', lineHeight: 1.5 }}>
+                      {eligibilityResult.matched_conditions.length} condition(s) matched
+                      {eligibilityResult.failed_conditions?.length > 0 &&
+                        ` · ${eligibilityResult.failed_conditions.length} unmet`}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>
+                  Complete your profile to check eligibility.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
