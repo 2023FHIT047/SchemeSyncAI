@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Menu, X } from 'lucide-react';
+import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Menu, X, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const Navbar = () => {
@@ -92,6 +92,14 @@ export const Navbar = () => {
                     {t('navbar.dashboard')}
                   </Link>
                 </li>
+                {user.is_staff && (
+                  <li>
+                    <Link to="/admin-panel" className="nav-link" onClick={() => setMobileOpen(false)}>
+                      <Shield style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
+                      Admin
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 500 }}>

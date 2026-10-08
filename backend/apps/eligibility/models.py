@@ -1,4 +1,6 @@
+import uuid
 from django.db import models
+from django.contrib.auth.models import User
 from apps.schemes.models import GovernmentScheme
 
 class EligibilityRule(models.Model):
@@ -35,3 +37,23 @@ class EligibilityRule(models.Model):
 
     def __str__(self):
         return f"Rule for {self.scheme.scheme_id}: {self.attribute} {self.operator} {self.value}"
+
+
+def generate_verification_id():
+    return uuid.uuid4().hex[:12].upper()
+
+
+class EligibilityCertificate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='eligibility_certificates')
+    scheme = models.ForeignKey(GovernmentScheme, on_delete=models.CASCADE, related_name='eligibility_certificates')
+    verification_id = models.CharField(max_length=16, unique=True, default=generate_verification_id, editable=False)
+    eligibility_score = models.IntegerField(default=0)
+    criteria_snapshot = models.JSONField(default=list, blank=True)
+    issued_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'scheme')
+        ordering = ['-issued_at']
+
+    def __str__(self):
+        return f"Certificate {self.verification_id} for {self.user.username} - {self.scheme.scheme_name}"

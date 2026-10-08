@@ -10,5 +10,17 @@ export const eligibilityApi = {
   evaluateAllSchemes: async () => {
     const res = await axiosClient.get('/eligibility/evaluate-all/');
     return res.data;
+  },
+
+  downloadCertificate: async (schemeId) => {
+    const res = await axiosClient.post(`/eligibility/certificate/${schemeId}/download/`, {}, {
+      responseType: 'blob'
+    });
+    return res;
+  },
+
+  verifyCertificate: async (verificationId) => {
+    const res = await axiosClient.get(`/eligibility/certificate/verify/${verificationId}/`);
+    return res.data;
   }
 };

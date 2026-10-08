@@ -1,13 +1,42 @@
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from .models import GovernmentScheme, SavedScheme
 from .serializers import GovernmentSchemeSerializer, SavedSchemeSerializer
 
+
+class SchemePagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 60
+
+    def get_page_size(self, request):
+        limit = request.query_params.get('limit')
+        if limit is not None:
+            try:
+                return min(int(limit), self.max_page_size)
+            except (TypeError, ValueError):
+                pass
+        return super().get_page_size(request)
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'page_size': self.get_page_size(self.request),
+            'current_page': self.page.number,
+            'total_pages': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+        })
+
+
 class SchemeListView(generics.ListCreateAPIView):
     serializer_class = GovernmentSchemeSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    pagination_class = SchemePagination
 
     def get_queryset(self):
         queryset = GovernmentScheme.objects.all()

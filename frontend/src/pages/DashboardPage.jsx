@@ -71,10 +71,10 @@ export const DashboardPage = () => {
         <p>Manage your personal profile and saved government welfare schemes.</p>
       </div>
 
-      <div className="dashboard-grid">
-        {/* Left Column: Profile + OCR Scanner */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div className="profile-card">
+      {/* Top Section: Profile + OCR Scanner side by side */}
+      <div className="dashboard-top-grid">
+        {/* Profile Card */}
+        <div className="profile-card" style={{ position: 'static' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--gray-200)' }}>
             <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
               <User style={{ width: '1.1rem', height: '1.1rem', color: 'var(--primary-700)' }} /> Personal Profile
@@ -113,6 +113,10 @@ export const DashboardPage = () => {
                 <input type="text" name="state" value={formData.state || ''} onChange={handleChange} className="form-input" />
               </div>
               <div className="form-group">
+                <label className="form-label">District</label>
+                <input type="text" name="district" value={formData.district || ''} onChange={handleChange} className="form-input" />
+              </div>
+              <div className="form-group">
                 <label className="form-label">Annual Family Income (₹)</label>
                 <input type="number" name="annual_family_income" value={formData.annual_family_income || ''} onChange={handleChange} className="form-input" />
               </div>
@@ -126,21 +130,39 @@ export const DashboardPage = () => {
                   <option value="UNEMPLOYED">Unemployed</option>
                   <option value="PRIVATE_JOB">Private Job</option>
                   <option value="GOVT_JOB">Government Job</option>
+                  <option value="LABOURER">Daily Wage Labourer</option>
+                  <option value="BUSINESS">Small Business</option>
+                  <option value="HOMEMAKER">Homemaker</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Caste Category</label>
+                <select name="caste_category" value={formData.caste_category || ''} onChange={handleChange} className="form-select">
+                  <option value="">Select Category</option>
+                  <option value="GENERAL">General</option>
+                  <option value="OBC">OBC</option>
+                  <option value="SC">SC</option>
+                  <option value="ST">ST</option>
+                  <option value="EWS">EWS</option>
                 </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.25rem' }}>
                 <label className="form-checkbox">
                   <input type="checkbox" name="is_farmer" checked={!!formData.is_farmer} onChange={handleChange} />
-                  Registered Farmer Status
+                  Registered Farmer
                 </label>
                 <label className="form-checkbox">
                   <input type="checkbox" name="is_student" checked={!!formData.is_student} onChange={handleChange} />
-                  Enrolled Student Status
+                  Enrolled Student
                 </label>
                 <label className="form-checkbox">
                   <input type="checkbox" name="land_ownership" checked={!!formData.land_ownership} onChange={handleChange} />
-                  Cultivable Land Ownership
+                  Land Ownership
+                </label>
+                <label className="form-checkbox">
+                  <input type="checkbox" name="bpl_card_holder" checked={!!formData.bpl_card_holder} onChange={handleChange} />
+                  BPL Card Holder
                 </label>
               </div>
 
@@ -154,45 +176,47 @@ export const DashboardPage = () => {
               <div className="profile-item"><span>Age</span><span>{profile?.age ? `${profile.age} yrs` : '—'}</span></div>
               <div className="profile-item"><span>Gender</span><span>{profile?.gender || '—'}</span></div>
               <div className="profile-item"><span>State</span><span>{profile?.state || '—'}</span></div>
-              <div className="profile-item"><span>Family Income</span><span>{profile?.annual_family_income ? `₹${profile.annual_family_income.toLocaleString('en-IN')}/yr` : '—'}</span></div>
+              <div className="profile-item"><span>District</span><span>{profile?.district || '—'}</span></div>
+              <div className="profile-item"><span>Family Income</span><span>{profile?.annual_family_income ? `₹${Number(profile.annual_family_income).toLocaleString('en-IN')}/yr` : '—'}</span></div>
               <div className="profile-item"><span>Occupation</span><span>{profile?.occupation || '—'}</span></div>
+              <div className="profile-item"><span>Category</span><span>{profile?.caste_category || '—'}</span></div>
               <div className="profile-item"><span>Farmer</span><span>{profile?.is_farmer ? '🌾 Yes' : 'No'}</span></div>
               <div className="profile-item"><span>Student</span><span>{profile?.is_student ? '🎓 Yes' : 'No'}</span></div>
-              <div className="profile-item"><span>Land Ownership</span><span>{profile?.land_ownership ? 'Yes' : 'No'}</span></div>
+              <div className="profile-item"><span>Land</span><span>{profile?.land_ownership ? `${profile.land_holding_acres || ''} acres` : 'No'}</span></div>
+              <div className="profile-item"><span>BPL Card</span><span>{profile?.bpl_card_holder ? 'Yes' : 'No'}</span></div>
             </div>
           )}
         </div>
 
-        {/* OCR Document Scanner */}
+        {/* OCR Document Scanner - gets proper width now */}
         <DocumentScanner onProfileUpdate={handleOCRProfileUpdate} />
-        </div>
+      </div>
 
-        {/* Saved Schemes */}
-        <div>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Bookmark style={{ width: '1.15rem', height: '1.15rem', color: 'var(--accent-saffron)' }} />
-            Saved Schemes
-            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-500)', background: 'var(--gray-100)', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
-              {savedSchemes.length}
-            </span>
-          </h2>
+      {/* Saved Schemes - Full Width Below */}
+      <div style={{ marginTop: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Bookmark style={{ width: '1.15rem', height: '1.15rem', color: 'var(--accent-saffron)' }} />
+          Saved Schemes
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-500)', background: 'var(--gray-100)', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
+            {savedSchemes.length}
+          </span>
+        </h2>
 
-          {savedSchemes.length === 0 ? (
-            <div className="empty-state">
-              <Bookmark style={{ width: '2.5rem', height: '2.5rem', color: 'var(--gray-300)', marginBottom: '1rem' }} />
-              <h3 style={{ fontSize: '1.05rem', marginBottom: '0.5rem' }}>No saved schemes yet</h3>
-              <p style={{ color: 'var(--gray-600)', fontSize: '0.875rem' }}>
-                Browse the scheme directory and bookmark schemes for quick access here.
-              </p>
-            </div>
-          ) : (
-            <div className="scheme-grid">
-              {savedSchemes.map(item => (
-                <SchemeCard key={item.id} scheme={item.scheme} onSaveToggle={loadSaved} />
-              ))}
-            </div>
-          )}
-        </div>
+        {savedSchemes.length === 0 ? (
+          <div className="empty-state">
+            <Bookmark style={{ width: '2.5rem', height: '2.5rem', color: 'var(--gray-300)', marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.05rem', marginBottom: '0.5rem' }}>No saved schemes yet</h3>
+            <p style={{ color: 'var(--gray-600)', fontSize: '0.875rem' }}>
+              Browse the scheme directory and bookmark schemes for quick access here.
+            </p>
+          </div>
+        ) : (
+          <div className="scheme-grid">
+            {savedSchemes.map(item => (
+              <SchemeCard key={item.id} scheme={item.scheme} onSaveToggle={loadSaved} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

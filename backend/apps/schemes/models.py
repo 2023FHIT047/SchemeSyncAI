@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class GovernmentScheme(models.Model):
     CATEGORY_CHOICES = [
         ('FARMER', 'Farmers & Agriculture'),
@@ -94,3 +95,19 @@ class SavedScheme(models.Model):
 
     def __str__(self):
         return f"{self.user.username} saved {self.scheme.scheme_name}"
+
+
+class SchemeNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheme_notifications')
+    scheme = models.ForeignKey(GovernmentScheme, on_delete=models.CASCADE, related_name='notifications')
+    email_sent = models.BooleanField(default=False)
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    eligibility_score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'scheme')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification: {self.scheme.scheme_name} -> {self.user.email}"

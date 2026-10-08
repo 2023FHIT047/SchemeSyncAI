@@ -16,7 +16,7 @@ export const HomePage = () => {
     const fetchSchemes = async () => {
       try {
         const data = await schemeApi.getSchemes({ limit: 6 });
-        setFeaturedSchemes(data.results || data.slice(0, 6));
+        setFeaturedSchemes((data.results || data).slice(0, 6));
       } catch (err) {
         console.error("Failed to load featured schemes:", err);
       } finally {

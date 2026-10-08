@@ -4,9 +4,10 @@ import { schemeApi } from '../api/schemeApi';
 import { eligibilityApi } from '../api/eligibilityApi';
 import { useAuth } from '../context/AuthContext';
 import { EligibilityBadge } from '../components/EligibilityBadge';
+import { FormattedText } from '../components/FormattedText';
 import {
   Building2, ExternalLink, ShieldCheck, FileCheck, ArrowLeft, Bookmark,
-  PhoneCall, Mail, MapPin, Tag, Banknote, Calendar, Globe
+  PhoneCall, Mail, MapPin, Tag, Banknote, Calendar, Globe, Award
 } from 'lucide-react';
 
 export const SchemeDetailPage = () => {
@@ -17,6 +18,8 @@ export const SchemeDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [downloadingCert, setDownloadingCert] = useState(false);
+  const [certError, setCertError] = useState('');
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -56,6 +59,37 @@ export const SchemeDetailPage = () => {
       setIsSaved(res.saved);
     } catch (err) {
       console.error("Toggle bookmark error:", err);
+    }
+  };
+
+  const handleDownloadCertificate = async () => {
+    setDownloadingCert(true);
+    setCertError('');
+    try {
+      const res = await eligibilityApi.downloadCertificate(schemeId);
+      const vid = res.headers['x-verification-id'] || '';
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `eligibility-certificate-${schemeId}${vid ? '-' + vid : ''}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Certificate download error:", err);
+      let msg = 'Unable to generate certificate right now.';
+      if (err.response && err.response.data) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.error) msg = parsed.error;
+        } catch (e) { /* keep default message */ }
+      }
+      setCertError(msg);
+    } finally {
+      setDownloadingCert(false);
     }
   };
 
@@ -177,13 +211,11 @@ export const SchemeDetailPage = () => {
               <FileCheck style={{ width: '1.15rem', height: '1.15rem', color: 'var(--primary-600)' }} />
               Scheme Description & Objective
             </h2>
-            <p style={{ color: 'var(--gray-700)', lineHeight: 1.75, fontSize: '0.925rem', marginBottom: scheme.objective ? 0 : 0 }}>
-              {scheme.detailed_description || scheme.short_description}
-            </p>
+            <FormattedText text={scheme.detailed_description || scheme.short_description} />
             {scheme.objective && (
               <div className="objective-callout">
                 <h4>Core Objective</h4>
-                <p>{scheme.objective}</p>
+                <FormattedText text={scheme.objective} />
               </div>
             )}
           </div>
@@ -198,7 +230,7 @@ export const SchemeDetailPage = () => {
               <p className="benefit-amount">
                 {scheme.benefit_amount || 'Direct Government Support'}
               </p>
-              <p className="benefit-desc">{scheme.benefits}</p>
+              <FormattedText text={scheme.benefits} />
             </div>
           </div>
 
@@ -391,6 +423,36 @@ export const SchemeDetailPage = () => {
                       {eligibilityResult.failed_conditions?.length > 0 &&
                         ` · ${eligibilityResult.failed_conditions.length} unmet`}
                     </p>
+                  )}
+                  {eligibilityResult.is_eligible && (
+                    <div style={{ marginTop: '0.9rem' }}>
+                      <button
+                        onClick={handleDownloadCertificate}
+                        disabled={downloadingCert}
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem' }}
+                      >
+                        {downloadingCert ? (
+                          <>
+                            <div className="loading-spinner" style={{ width: '1rem', height: '1rem', borderWidth: '2px' }}></div>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Award style={{ width: '1rem', height: '1rem' }} />
+                            Download Eligibility Proof
+                          </>
+                        )}
+                      </button>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--gray-500)', marginTop: '0.5rem', lineHeight: 1.4 }}>
+                        Official PDF proof that you fully meet this scheme's criteria.
+                      </p>
+                      {certError && (
+                        <p style={{ fontSize: '0.75rem', color: '#991b1b', marginTop: '0.4rem', lineHeight: 1.4 }}>
+                          {certError}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               ) : (

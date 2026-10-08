@@ -5,14 +5,22 @@ import { Upload, FileText, Camera, CheckCircle2, AlertCircle, Loader2, X, Sparkl
 const DOCUMENT_TYPES = [
   { value: '', label: 'Auto-Detect', icon: '🔍' },
   { value: 'AADHAAR', label: 'Aadhaar Card', icon: '🪪' },
+  { value: 'PAN_CARD', label: 'PAN Card', icon: '💳' },
   { value: 'INCOME_CERTIFICATE', label: 'Income Certificate', icon: '📋' },
   { value: 'RATION_CARD', label: 'Ration Card', icon: '🏠' },
   { value: 'LAND_RECORD', label: 'Land Record (7/12)', icon: '🌾' },
+  { value: 'CASTE_CERTIFICATE', label: 'Caste Certificate', icon: '🏷️' },
+  { value: 'DOMICILE_CERTIFICATE', label: 'Domicile Certificate', icon: '📍' },
+  { value: 'BIRTH_CERTIFICATE', label: 'Birth Certificate', icon: '👶' },
+  { value: 'DISABILITY_CERTIFICATE', label: 'Disability Certificate', icon: '♿' },
+  { value: 'EDUCATION_MARKSHEET', label: 'Marksheet', icon: '🎓' },
+  { value: 'BANK_PASSBOOK', label: 'Bank Passbook', icon: '🏦' },
 ];
 
 export const DocumentScanner = ({ onProfileUpdate }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [isPdfFile, setIsPdfFile] = useState(false);
   const [docType, setDocType] = useState('');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(null);
@@ -24,8 +32,10 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
     const selected = e.target.files[0];
     if (!selected) return;
 
-    if (!selected.type.startsWith('image/')) {
-      setError('Please upload an image file (JPEG, PNG, or WebP).');
+    const isImage = selected.type.startsWith('image/');
+    const isPdf = selected.type === 'application/pdf' || selected.name.toLowerCase().endsWith('.pdf');
+    if (!isImage && !isPdf) {
+      setError('Please upload an image (JPEG, PNG, WebP) or a PDF file.');
       return;
     }
 
@@ -38,18 +48,23 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
     setError(null);
     setResult(null);
     setApplied(false);
-    setPreview(URL.createObjectURL(selected));
+    setIsPdfFile(isPdf);
+    setPreview(isPdf ? null : URL.createObjectURL(selected));
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     const dropped = e.dataTransfer.files[0];
-    if (dropped && dropped.type.startsWith('image/')) {
+    if (!dropped) return;
+    const isImage = dropped.type.startsWith('image/');
+    const isPdf = dropped.type === 'application/pdf' || dropped.name.toLowerCase().endsWith('.pdf');
+    if (isImage || isPdf) {
       setFile(dropped);
       setError(null);
       setResult(null);
       setApplied(false);
-      setPreview(URL.createObjectURL(dropped));
+      setIsPdfFile(isPdf);
+      setPreview(isPdf ? null : URL.createObjectURL(dropped));
     }
   };
 
@@ -84,6 +99,7 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
   const handleReset = () => {
     setFile(null);
     setPreview(null);
+    setIsPdfFile(false);
     setResult(null);
     setError(null);
     setApplied(false);
@@ -98,7 +114,7 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
         Document Scanner (OCR)
       </h2>
       <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-        Upload a photo of your government document to auto-extract details and fill your profile instantly.
+        Upload a photo or PDF of your government document to auto-extract details and fill your profile instantly.
       </p>
 
       {/* Document Type Selector */}
@@ -131,7 +147,7 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
       </div>
 
       {/* Upload Area */}
-      {!preview ? (
+      {!file ? (
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
@@ -150,15 +166,15 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
         >
           <Upload style={{ width: '2.5rem', height: '2.5rem', color: 'var(--gray-400)', marginBottom: '0.75rem' }} />
           <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '0.3rem' }}>
-            Drop your document image here
+            Drop your document image or PDF here
           </p>
           <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
-            or click to browse · JPEG, PNG, WebP · Max 10MB
+            or click to browse · JPEG, PNG, WebP, PDF · Max 10MB
           </p>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
             onChange={handleFileSelect}
             style={{ display: 'none' }}
           />
@@ -167,7 +183,17 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Preview */}
           <div style={{ position: 'relative', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--gray-200)' }}>
-            <img src={preview} alt="Document preview" style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', background: 'var(--gray-100)' }} />
+            {isPdfFile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '2.5rem 1rem', background: 'var(--gray-100)' }}>
+                <FileText style={{ width: '3rem', height: '3rem', color: '#dc2626' }} />
+                <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--gray-700)', margin: 0, wordBreak: 'break-all', textAlign: 'center' }}>
+                  {file?.name}
+                </p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', margin: 0 }}>PDF document ready to scan</p>
+              </div>
+            ) : (
+              <img src={preview} alt="Document preview" style={{ width: '100%', maxHeight: '280px', objectFit: 'contain', background: 'var(--gray-100)' }} />
+            )}
             <button
               onClick={handleReset}
               style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '9999px', padding: '0.4rem', cursor: 'pointer', color: 'white' }}
