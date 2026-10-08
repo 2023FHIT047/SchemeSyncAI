@@ -12,6 +12,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AdminPanelPage } from './pages/AdminPanelPage';
+import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 
 export function App() {
   return (
@@ -27,6 +29,8 @@ export function App() {
               <Route path="/eligibility-checker" element={<EligibilityCheckerPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/admin-panel" element={<AdminPanelPage />} />
+              <Route path="/verify-certificate/:verificationId" element={<VerifyCertificatePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
             </Routes>
