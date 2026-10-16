@@ -45,7 +45,7 @@ class EvaluateAllSchemesView(APIView):
 
     def get(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        schemes = GovernmentScheme.objects.filter(scheme_status='ACTIVE')
+        schemes = GovernmentScheme.objects.filter(scheme_status='ACTIVE').prefetch_related('eligibility_rules')
 
         eligible_list = []
         ineligible_list = []
@@ -77,6 +77,122 @@ class EvaluateAllSchemesView(APIView):
             'eligible_schemes': eligible_list,
             'ineligible_schemes': ineligible_list
         }, status=status.HTTP_200_OK)
+
+
+class SimulateEligibilityView(APIView):
+    """
+    POST /api/eligibility/simulate/
+    Evaluates all active schemes against a hypothetical profile without saving anything.
+    When the caller is authenticated, results are diffed against their real profile's
+    eligibility (newly unlocked vs no-longer-eligible schemes).
+    """
+    permission_classes = (permissions.AllowAny,)
+
+    SIM_KEYS = {
+        'age': 'int',
+        'annual_family_income': 'float',
+        'state': 'str',
+        'gender': 'str',
+        'caste_category': 'str',
+        'occupation': 'str',
+        'education_level': 'str',
+        'marital_status': 'str',
+        'is_student': 'bool',
+        'is_farmer': 'bool',
+        'land_ownership': 'bool',
+        'is_disabled': 'bool',
+        'bpl_card_holder': 'bool',
+    }
+
+    @classmethod
+    def _sanitize_profile(cls, raw):
+        clean = {}
+        for key, kind in cls.SIM_KEYS.items():
+            if key not in raw:
+                continue
+            val = raw[key]
+            if val is None or val == '':
+                continue
+            try:
+                if kind == 'bool':
+                    if isinstance(val, str):
+                        val = val.strip().lower() in ('true', '1', 'yes')
+                    else:
+                        val = bool(val)
+                elif kind == 'int':
+                    val = max(0, min(120, int(float(val)))) if key == 'age' else int(float(val))
+                elif kind == 'float':
+                    val = max(0.0, float(val))
+                else:
+                    val = str(val).strip()[:100]
+            except (TypeError, ValueError):
+                continue
+            if val == '':
+                continue
+            clean[key] = val
+        return clean
+
+    @staticmethod
+    def _compact(scheme, analysis):
+        return {
+            'scheme_id': scheme.scheme_id,
+            'scheme_name': scheme.scheme_name,
+            'category': scheme.category,
+            'category_display': scheme.get_category_display(),
+            'short_description': (scheme.short_description or '')[:240],
+            'matched': [m.get('description', '') for m in analysis['matched_conditions'][:3]],
+        }
+
+    def post(self, request):
+        raw = request.data.get('profile')
+        if not isinstance(raw, dict):
+            return Response({'error': 'Provide a "profile" object with hypothetical attributes.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        sim_profile = self._sanitize_profile(raw)
+        if not sim_profile:
+            return Response({'error': 'No valid profile attributes supplied.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        schemes = list(
+            GovernmentScheme.objects.filter(scheme_status='ACTIVE').prefetch_related('eligibility_rules')
+        )
+
+        def evaluate_all(profile):
+            compacts = {}
+            for scheme in schemes:
+                analysis = EligibilityEngine.evaluate_scheme(scheme, profile)
+                if analysis['is_eligible']:
+                    compacts[scheme.scheme_id] = self._compact(scheme, analysis)
+            return compacts
+
+        sim_compacts = evaluate_all(sim_profile)
+
+        real_compacts = None
+        if request.user.is_authenticated:
+            real_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            real_compacts = evaluate_all(real_profile)
+
+        payload = {
+            'total_schemes_checked': len(schemes),
+            'simulated_eligible_count': len(sim_compacts),
+            'is_authenticated': request.user.is_authenticated,
+            'real_eligible_count': len(real_compacts) if real_compacts is not None else None,
+        }
+
+        if real_compacts is not None:
+            newly_ids = [sid for sid in sim_compacts if sid not in real_compacts]
+            lost_ids = [sid for sid in real_compacts if sid not in sim_compacts]
+            payload['newly_eligible'] = [sim_compacts[sid] for sid in newly_ids[:100]]
+            payload['newly_eligible_truncated'] = len(newly_ids) > 100
+            payload['no_longer_eligible'] = [real_compacts[sid] for sid in lost_ids[:100]]
+            payload['no_longer_eligible_truncated'] = len(lost_ids) > 100
+
+        eligible_list = list(sim_compacts.values())
+        payload['eligible_schemes'] = eligible_list[:300]
+        payload['eligible_truncated'] = len(eligible_list) > 300
+
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class DownloadCertificateView(APIView):

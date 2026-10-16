@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/authApi';
+import { ProfileCompletionCard } from '../components/ProfileCompletionCard';
 import { User, Save, X, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 
 export const ProfilePage = () => {
-  const { user, profile: authProfile, updateProfile } = useAuth();
+  const { user, profile: authProfile, updateProfile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,12 +16,13 @@ export const ProfilePage = () => {
   const [activeSection, setActiveSection] = useState('personal');
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/login');
       return;
     }
     loadProfile();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const loadProfile = async () => {
     try {
@@ -113,6 +115,8 @@ export const ProfilePage = () => {
             Fill in your details to get personalized scheme recommendations and eligibility checks.
           </p>
         </div>
+
+        <ProfileCompletionCard variant="dark" onJumpToSection={setActiveSection} />
 
         {/* Success / Error Messages */}
         {error && (

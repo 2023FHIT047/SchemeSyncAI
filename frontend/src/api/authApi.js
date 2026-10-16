@@ -25,6 +25,11 @@ export const authApi = {
     return res.data;
   },
 
+  getProfileCompletion: async () => {
+    const res = await axiosClient.get('/users/profile/completion/');
+    return res.data;
+  },
+
   updateProfile: async (profileData) => {
     const res = await axiosClient.patch('/users/profile/', profileData);
     return res.data;

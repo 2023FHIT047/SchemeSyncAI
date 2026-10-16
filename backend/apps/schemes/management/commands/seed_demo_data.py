@@ -23,6 +23,15 @@ class Command(BaseCommand):
                 "detailed_description": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) is a Central Sector scheme to augment the financial needs of landholding farmers. Under the Scheme an amount of ₹6,000/- per year is transferred in three 4-monthly installments of ₹2,000/- directly into the bank accounts of the beneficiaries.",
                 "objective": "To supplement the financial needs of landholding farmers for procuring agricultural inputs and domestic expenses.",
                 "benefits": "₹6,000 per year transferred directly to bank account via DBT in 3 installments.",
+                "application_process": (
+                    "### Online Registration (PM-KISAN Portal)\n\n"
+                    "**Step 1:** Visit the [PM-KISAN Portal](https://pmkisan.gov.in/) and click on \"New Farmer Registration\".\n\n"
+                    "**Step 2:** Select the farmer category and enter your Aadhaar Number and Mobile Number. Verify the OTP sent by UIDAI.\n\n"
+                    "**Step 3:** Fill in the registration form with your personal details, land details, and bank account information.\n\n"
+                    "**Step 4:** Upload the scanned copies of the mandatory documents.\n\n"
+                    "**Step 5:** Submit the form and note down the registration number for future tracking.\n\n"
+                    "> **Note:** If you have difficulty with online registration, visit your nearest Common Service Centre (CSC) or the local Agriculture Officer for assistance."
+                ),
                 "benefit_type": "FINANCIAL",
                 "benefit_amount": "₹6,000 / year",
                 "application_mode": "ONLINE",
@@ -56,6 +65,17 @@ class Command(BaseCommand):
                 "detailed_description": "PMFBY provides a comprehensive insurance cover against failure of the crop thus helping in stabilizing the income of the farmers. Farmers pay a uniform premium of only 2% for Kharif and 1.5% for Rabi crops.",
                 "objective": "To provide insurance coverage and financial support to farmers in the event of failure of notified crops due to natural calamities.",
                 "benefits": "Financial protection against crop loss with low premium (1.5% - 2%) and fast claims settlement.",
+                "application_process": (
+                    "### Online Enrollment (PMFBY Portal)\n\n"
+                    "**Step 1:** Visit the [PMFBY Portal](https://pmfby.gov.in/) or the National Crop Insurance Portal and select your State and Season.\n\n"
+                    "**Step 2:** Enter your Aadhaar-linked personal details and crop/plot information (survey number, area sown, and crop sown).\n\n"
+                    "**Step 3:** Upload the required documents and pay the subsidized premium online.\n\n"
+                    "**Step 4:** Download the policy schedule and keep the acknowledgement receipt safely for claim purposes.\n\n"
+                    "### Offline Enrollment (Bank / CSC)\n\n"
+                    "**Step 1:** Visit your nearest bank branch or Common Service Centre (CSC) within the cutoff date for the season.\n\n"
+                    "**Step 2:** Submit the completed enrollment form along with the sowing certificate issued by the Gram Sevak / Patwari and other documents.\n\n"
+                    "**Step 3:** Pay the premium in cash/cheque and collect the premium receipt — this is your proof of insurance."
+                ),
                 "benefit_type": "SUBSIDY",
                 "benefit_amount": "Up to 98% Premium Subsidy",
                 "application_mode": "HYBRID",
@@ -90,6 +110,14 @@ class Command(BaseCommand):
                 "detailed_description": "Post Matric Scholarship scheme provides financial assistance to SC, ST, and OBC students studying at post-matriculation or post-secondary stage to enable them to complete their education.",
                 "objective": "To significantly increase the Gross Enrolment Ratio (GER) of marginalized students in higher education.",
                 "benefits": "Complete tuition fee reimbursement + monthly maintenance allowance up to ₹1,200/month.",
+                "application_process": (
+                    "### Online Application (National Scholarship Portal)\n\n"
+                    "**Step 1:** Register on the [National Scholarship Portal](https://scholarships.gov.in/) as a fresh applicant and note your application ID.\n\n"
+                    "**Step 2:** Log in and fill in the academic details, bank account details, and the scheme-specific application form.\n\n"
+                    "**Step 3:** Upload scanned copies of your caste certificate, income certificate and marksheet of the last qualifying examination.\n\n"
+                    "**Step 4:** Submit the application and get it verified by your institute's Nodal Officer through the portal.\n\n"
+                    "**Step 5:** Track the application status online — the scholarship amount is credited directly to your bank account after approval."
+                ),
                 "benefit_type": "SCHOLARSHIP",
                 "benefit_amount": "100% Fee Reimbursement + Monthly Allowance",
                 "application_mode": "ONLINE",
@@ -124,6 +152,14 @@ class Command(BaseCommand):
                 "detailed_description": "Provides financial assistance to meritorious students from low income families to meet a part of their day-to-day expenses while pursuing higher studies.",
                 "objective": "To support meritorious students with financial assistance for university education.",
                 "benefits": "₹12,000 per annum for Graduation years, ₹20,000 per annum for Post-Graduation years.",
+                "application_process": (
+                    "### Online Application (National Scholarship Portal)\n\n"
+                    "**Step 1:** Visit the [National Scholarship Portal](https://scholarships.gov.in/) and register with your Aadhaar and bank details.\n\n"
+                    "**Step 2:** Complete the One Time Registration (OTR) and fill in the merit scholarship application form.\n\n"
+                    "**Step 3:** Upload your Class 12th passing certificate, income certificate, and institute verification documents.\n\n"
+                    "**Step 4:** Submit the application before the portal deadline and get it verified by your institute and State Nodal Officer.\n\n"
+                    "**Step 5:** The scholarship is disbursed annually through Direct Benefit Transfer to your bank account."
+                ),
                 "benefit_type": "SCHOLARSHIP",
                 "benefit_amount": "Up to ₹20,000 / year",
                 "application_mode": "ONLINE",
@@ -159,6 +195,14 @@ class Command(BaseCommand):
                 "detailed_description": "Sukanya Samriddhi Yojana is a small deposit scheme for the girl child launched as a part of Beti Bachao Beti Padhao campaign. Offers highest interest rates (approx 8.2%) with 80C tax exemption.",
                 "objective": "To ensure financial security and empowerment for girl children in India.",
                 "benefits": "Highest sovereign-backed tax-free interest rate (8.2% p.a.) with partial withdrawal for higher education.",
+                "application_process": (
+                    "### Account Opening (Post Office / Authorized Bank)\n\n"
+                    "**Step 1:** Visit any Post Office or authorized bank branch with the girl child's birth certificate and your (parent/guardian) identity proof.\n\n"
+                    "**Step 2:** Fill in the Sukanya Samriddhi account opening form and submit the KYC documents of the child and guardian.\n\n"
+                    "**Step 3:** Deposit the initial amount (minimum ₹250, maximum ₹1.5 Lakh per financial year) and collect the passbook.\n\n"
+                    "**Step 4:** Continue depositing for 15 years — the account matures 21 years from opening, with partial withdrawal allowed for higher education after the girl turns 18.\n\n"
+                    "> **Note:** Up to ₹1.5 Lakh deposited annually qualifies for tax deduction under Section 80C."
+                ),
                 "benefit_type": "FINANCIAL",
                 "benefit_amount": "Up to ₹1.5 Lakh annual tax-free savings",
                 "application_mode": "HYBRID",
@@ -191,6 +235,16 @@ class Command(BaseCommand):
                 "detailed_description": "PMMVY provides partial compensation for the wage loss in terms of cash incentive so that women can take adequate rest before and after delivery of the first child.",
                 "objective": "To promote healthcare seeking behavior and nutritional support for pregnant and lactating mothers.",
                 "benefits": "Direct cash transfer of ₹5,000 in bank account upon ANC registration & child vaccination.",
+                "application_process": (
+                    "### Online Registration (PMMVY Portal)\n\n"
+                    "**Step 1:** Visit the [PMMVY Portal](https://pmmvy.wcd.gov.in/) and register as a beneficiary with your Aadhaar and mobile number.\n\n"
+                    "**Step 2:** Fill in the Mother and Child Protection (MCP) card details and your bank account information.\n\n"
+                    "**Step 3:** Upload the MCP card, Aadhaar, and bank passbook documents through the portal.\n\n"
+                    "**Step 4:** Submit the form — benefits are paid in installments as you complete ANC checkups and the first cycle of child vaccination.\n\n"
+                    "### Offline Registration (Anganwadi / CSC)\n\n"
+                    "**Step 1:** Visit your nearest Anganwadi Centre or Common Service Centre with your MCP card and documents.\n\n"
+                    "**Step 2:** The Anganwadi worker/operator fills and submits the application form on your behalf."
+                ),
                 "benefit_type": "FINANCIAL",
                 "benefit_amount": "₹5,000 - ₹6,000 Cash Transfer",
                 "application_mode": "ONLINE",
@@ -223,6 +277,17 @@ class Command(BaseCommand):
                 "detailed_description": "State scheme providing monthly financial independence and nutrition support to married, widowed, divorced, and destitute women in Maharashtra state.",
                 "objective": "To empower women economically and ensure health and nutrition dignity.",
                 "benefits": "₹1,500 monthly cash assistance directly transferred into bank account.",
+                "application_process": (
+                    "### Online Application (Ladki Bahin Portal)\n\n"
+                    "**Step 1:** Visit the [Ladki Bahin Yojana Portal](https://ladlibahin.maharashtra.gov.in/) and click on \"Apply Now\".\n\n"
+                    "**Step 2:** Enter your mobile number, verify the OTP, and complete Aadhaar-based e-KYC.\n\n"
+                    "**Step 3:** Fill in the application form with your personal, address, and bank account details.\n\n"
+                    "**Step 4:** Upload the required documents (Aadhaar, domicile/ration card, and income proof).\n\n"
+                    "**Step 5:** Submit the form and note the application number to track the status.\n\n"
+                    "### Offline Application (Anganwadi / CSC)\n\n"
+                    "**Step 1:** Collect the application form from your local Anganwadi or Setu / CSC centre, attach the documents, and submit it there.\n\n"
+                    "> **Note:** The monthly amount of ₹1,500 is credited to the bank account of eligible women aged 21–65 years each month."
+                ),
                 "benefit_type": "FINANCIAL",
                 "benefit_amount": "₹1,500 / month",
                 "application_mode": "ONLINE",
@@ -258,6 +323,14 @@ class Command(BaseCommand):
                 "detailed_description": "PM Vishwakarma offers recognition, skill training, ₹15,000 tool kit incentive, and subsidized loans up to ₹3,00,000 for 18 traditional trades including tailoring, basket weaving, and carpentry.",
                 "objective": "To strengthen and nurture traditional artisans and craftsmen.",
                 "benefits": "₹15,000 Toolkit Incentive + ₹3,00,000 Collateral-free Credit at 5% interest rate + Skill stipend ₹500/day.",
+                "application_process": (
+                    "### Online Registration (PM Vishwakarma Portal / CSC)\n\n"
+                    "**Step 1:** Visit your nearest Common Service Centre (CSC) and register on the [PM Vishwakarma Portal](https://pmvishwakarma.gov.in/) with your Aadhaar and mobile number.\n\n"
+                    "**Step 2:** Select your trade from the 18 notified traditional trades and fill in the family and occupation details.\n\n"
+                    "**Step 3:** Upload the required documents (Aadhaar, bank passbook, and ration card).\n\n"
+                    "**Step 4:** Your application is verified by the Gram Panchayat / Urban Local Body, followed by screening by the District Implementation Committee.\n\n"
+                    "**Step 5:** Upon approval, complete the basic skill training to receive the ₹15,000 toolkit e-voucher and become eligible for collateral-free loans up to ₹3,00,000 at 5% interest."
+                ),
                 "benefit_type": "LOAN",
                 "benefit_amount": "₹15,000 Tool Voucher + ₹3 Lakh Loan at 5%",
                 "application_mode": "ONLINE",

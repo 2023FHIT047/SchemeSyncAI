@@ -12,6 +12,11 @@ export const eligibilityApi = {
     return res.data;
   },
 
+  simulate: async (profileData) => {
+    const res = await axiosClient.post('/eligibility/simulate/', { profile: profileData });
+    return res.data;
+  },
+
   downloadCertificate: async (schemeId) => {
     const res = await axiosClient.post(`/eligibility/certificate/${schemeId}/download/`, {}, {
       responseType: 'blob'

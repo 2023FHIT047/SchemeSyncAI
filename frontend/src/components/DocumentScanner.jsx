@@ -1,23 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { ocrApi } from '../api/ocrApi';
-import { Upload, FileText, Camera, CheckCircle2, AlertCircle, Loader2, X, Sparkles } from 'lucide-react';
+import { DOCUMENT_TYPE_META } from '../constants/documentTypes';
+import { Upload, FileText, Camera, CheckCircle2, AlertCircle, Loader2, X, Sparkles, FolderDown } from 'lucide-react';
 
 const DOCUMENT_TYPES = [
   { value: '', label: 'Auto-Detect', icon: '🔍' },
-  { value: 'AADHAAR', label: 'Aadhaar Card', icon: '🪪' },
-  { value: 'PAN_CARD', label: 'PAN Card', icon: '💳' },
-  { value: 'INCOME_CERTIFICATE', label: 'Income Certificate', icon: '📋' },
-  { value: 'RATION_CARD', label: 'Ration Card', icon: '🏠' },
-  { value: 'LAND_RECORD', label: 'Land Record (7/12)', icon: '🌾' },
-  { value: 'CASTE_CERTIFICATE', label: 'Caste Certificate', icon: '🏷️' },
-  { value: 'DOMICILE_CERTIFICATE', label: 'Domicile Certificate', icon: '📍' },
-  { value: 'BIRTH_CERTIFICATE', label: 'Birth Certificate', icon: '👶' },
-  { value: 'DISABILITY_CERTIFICATE', label: 'Disability Certificate', icon: '♿' },
-  { value: 'EDUCATION_MARKSHEET', label: 'Marksheet', icon: '🎓' },
-  { value: 'BANK_PASSBOOK', label: 'Bank Passbook', icon: '🏦' },
+  ...Object.entries(DOCUMENT_TYPE_META)
+    .filter(([value]) => value !== 'GENERAL')
+    .map(([value, meta]) => ({ value, ...meta })),
 ];
 
-export const DocumentScanner = ({ onProfileUpdate }) => {
+export const DocumentScanner = ({ onProfileUpdate, onScanSaved }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isPdfFile, setIsPdfFile] = useState(false);
@@ -78,6 +71,7 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
       const res = await ocrApi.scanDocument(file, docType || null);
       if (res.success) {
         setResult(res);
+        if (res.vault_saved && onScanSaved) onScanSaved();
       } else {
         setError(res.error || 'Failed to extract data from document.');
       }
@@ -246,6 +240,13 @@ export const DocumentScanner = ({ onProfileUpdate }) => {
               {result.document_type}
             </span>
           </div>
+
+          {result.vault_saved && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '1rem', padding: '0.55rem 0.85rem', background: 'var(--accent-emerald-light)', border: '1px solid #a7f3d0', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', fontWeight: 600, color: '#047857' }}>
+              <FolderDown style={{ width: '0.95rem', height: '0.95rem', flexShrink: 0 }} />
+              Saved to your document vault — it now counts towards scheme readiness checks.
+            </div>
+          )}
 
           {/* Extracted Fields */}
           <div style={{ display: 'grid', gap: '0.6rem', marginBottom: '1.25rem' }}>

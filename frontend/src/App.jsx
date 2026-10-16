@@ -4,10 +4,12 @@ import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ChatbotDrawer } from './components/ChatbotDrawer';
+import { PwaPrompt } from './components/PwaPrompt';
 import { HomePage } from './pages/HomePage';
 import { SchemeListPage } from './pages/SchemeListPage';
 import { SchemeDetailPage } from './pages/SchemeDetailPage';
 import { EligibilityCheckerPage } from './pages/EligibilityCheckerPage';
+import { WhatIfSimulatorPage } from './pages/WhatIfSimulatorPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -27,6 +29,7 @@ export function App() {
               <Route path="/schemes" element={<SchemeListPage />} />
               <Route path="/schemes/:schemeId" element={<SchemeDetailPage />} />
               <Route path="/eligibility-checker" element={<EligibilityCheckerPage />} />
+              <Route path="/what-if-simulator" element={<WhatIfSimulatorPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/admin-panel" element={<AdminPanelPage />} />
@@ -36,6 +39,7 @@ export function App() {
             </Routes>
           </main>
           <ChatbotDrawer />
+          <PwaPrompt />
           <Footer />
         </div>
       </Router>

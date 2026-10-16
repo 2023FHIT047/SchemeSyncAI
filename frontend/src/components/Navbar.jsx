@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Menu, X, Shield } from 'lucide-react';
+import { Landmark, User, Bookmark, CheckCircle2, LogOut, LogIn, Menu, X, Shield, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const Navbar = () => {
@@ -76,6 +76,12 @@ export const Navbar = () => {
               <Link to="/eligibility-checker" className="nav-link" onClick={() => setMobileOpen(false)}>
                 <CheckCircle2 style={{ width: '1rem', height: '1rem', color: 'var(--accent-emerald)' }} />
                 {t('navbar.check_eligibility')}
+              </Link>
+            </li>
+            <li>
+              <Link to="/what-if-simulator" className="nav-link" onClick={() => setMobileOpen(false)}>
+                <FlaskConical style={{ width: '1rem', height: '1rem', color: 'var(--primary-600, #2563eb)' }} />
+                What-If Simulator
               </Link>
             </li>
             {user ? (
