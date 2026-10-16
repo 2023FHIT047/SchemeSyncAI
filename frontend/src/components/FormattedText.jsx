@@ -7,7 +7,14 @@ import React from 'react';
 export const FormattedText = ({ text, className, style }) => {
   if (!text) return null;
 
-  const lines = text.split('\n');
+  const cleaned = text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  const lines = cleaned.split('\n');
   const elements = [];
   let listBuffer = [];
   let listType = null;
@@ -29,23 +36,41 @@ export const FormattedText = ({ text, className, style }) => {
   };
 
   const renderInline = (str) => {
-    // Handle **bold** and *italic*
+    // Handle [text](url) links, ***bold italic***, **bold**, and *italic*
     const parts = [];
-    let remaining = str;
+    const regex = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)|\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*([^*\n]+)\*/g;
+    let lastIdx = 0;
     let keyIdx = 0;
+    let match;
 
-    while (remaining.length > 0) {
-      const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-      if (boldMatch) {
-        const idx = remaining.indexOf(boldMatch[0]);
-        if (idx > 0) parts.push(remaining.slice(0, idx));
-        parts.push(<strong key={keyIdx++} style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{boldMatch[1]}</strong>);
-        remaining = remaining.slice(idx + boldMatch[0].length);
-      } else {
-        parts.push(remaining);
-        break;
+    while ((match = regex.exec(str)) !== null) {
+      if (match.index > lastIdx) parts.push(str.slice(lastIdx, match.index));
+      if (match[1] && match[2]) {
+        parts.push(
+          <a
+            key={keyIdx++}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--primary-700)', fontWeight: 600, textDecoration: 'underline' }}
+          >
+            {match[1]}
+          </a>
+        );
+      } else if (match[3]) {
+        parts.push(
+          <strong key={keyIdx++} style={{ fontWeight: 700, color: 'var(--gray-900)' }}>
+            <em>{match[3]}</em>
+          </strong>
+        );
+      } else if (match[4]) {
+        parts.push(<strong key={keyIdx++} style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{match[4]}</strong>);
+      } else if (match[5]) {
+        parts.push(<em key={keyIdx++}>{match[5]}</em>);
       }
+      lastIdx = match.index + match[0].length;
     }
+    if (lastIdx < str.length) parts.push(str.slice(lastIdx));
     return parts.length > 0 ? parts : str;
   };
 
@@ -99,13 +124,13 @@ export const FormattedText = ({ text, className, style }) => {
       return;
     }
 
-    // Heading-like: #### text or short uppercase line
-    if (trimmed.match(/^#{1,4}\s+/)) {
+    // Heading-like: # to ###### text
+    if (trimmed.match(/^#{1,6}\s+/)) {
       flushList(`list-${idx}`);
-      const headingText = trimmed.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
+      const headingText = trimmed.replace(/^#{1,6}\s+/, '');
       elements.push(
         <h4 key={idx} style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary-900)', margin: '1.25rem 0 0.5rem' }}>
-          {headingText}
+          {renderInline(headingText)}
         </h4>
       );
       return;

@@ -1,6 +1,14 @@
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_state(value):
+    """Canonical form for state names: lowercase, drop trailing 'State'/'UT' suffixes."""
+    s = str(value).strip().lower()
+    s = re.sub(r'[\s_-]*(state|ut)$', '', s)
+    return s.strip()
 
 class EligibilityEngine:
     """
@@ -21,6 +29,13 @@ class EligibilityEngine:
             user_val = user_profile.get(attr_name, None)
         else:
             user_val = getattr(user_profile, attr_name, None)
+
+        # Scraped rules use 'resident_state', while profiles store 'state'
+        if attr_name == 'resident_state' and (user_val is None or user_val == ''):
+            if isinstance(user_profile, dict):
+                user_val = user_profile.get('state', None)
+            else:
+                user_val = getattr(user_profile, 'state', None)
 
         if user_val is None or user_val == '':
             return {
@@ -69,17 +84,23 @@ class EligibilityEngine:
 
             elif val_type in ('LIST', 'STRING') or op in ('IN', 'NOT IN'):
                 # Handle list / string matching
-                req_list = [item.strip().lower() for item in req_val_str.split(',') if item.strip()]
-                str_user = str(user_val).strip().lower()
+                if attr_name == 'resident_state':
+                    norm_user = _normalize_state(user_val)
+                    req_list = [_normalize_state(item) for item in req_val_str.split(',') if item.strip()]
+                    req_cmp = _normalize_state(req_val_str)
+                else:
+                    norm_user = str(user_val).strip().lower()
+                    req_list = [item.strip().lower() for item in req_val_str.split(',') if item.strip()]
+                    req_cmp = req_val_str.lower()
 
                 if op == '=':
-                    passed = (str_user == req_val_str.lower())
+                    passed = (norm_user == req_cmp)
                 elif op == '!=':
-                    passed = (str_user != req_val_str.lower())
+                    passed = (norm_user != req_cmp)
                 elif op == 'IN':
-                    passed = (str_user in req_list or req_val_str.lower() == 'all india' or 'all' in req_list)
+                    passed = (norm_user in req_list or req_cmp == 'all india' or 'all' in req_list)
                 elif op == 'NOT IN':
-                    passed = (str_user not in req_list)
+                    passed = (norm_user not in req_list)
 
             if passed:
                 status = 'PASSED'

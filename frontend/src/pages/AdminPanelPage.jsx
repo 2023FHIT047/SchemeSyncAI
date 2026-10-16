@@ -402,15 +402,29 @@ export const AdminPanelPage = () => {
 
           {/* Result */}
           {result && (
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-              <CheckCircle2 style={{ width: '1.2rem', height: '1.2rem', color: '#16a34a', flexShrink: 0 }} />
-              <div>
-                <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#166534', margin: 0 }}>{result.message}</p>
-                <p style={{ fontSize: '0.8rem', color: '#4ade80', margin: '0.25rem 0 0' }}>
-                  Scheme ID: {result.scheme?.scheme_id} | Notified: {result.notified_count} user(s)
-                </p>
+            result.notified_count > 0 ? (
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                <CheckCircle2 style={{ width: '1.2rem', height: '1.2rem', color: '#16a34a', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#166534', margin: 0 }}>{result.message}</p>
+                  <p style={{ fontSize: '0.8rem', color: '#4ade80', margin: '0.25rem 0 0' }}>
+                    Scheme ID: {result.scheme?.scheme_id} | Notified: {result.notified_count} user(s)
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                <AlertCircle style={{ width: '1.2rem', height: '1.2rem', color: '#d97706', flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#92400e', margin: 0 }}>
+                    Scheme created (ID: {result.scheme?.scheme_id}), but no user matched its eligibility rules — no emails were sent.
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: '#b45309', margin: '0.35rem 0 0', lineHeight: 1.5 }}>
+                    No notification row means the scheme was evaluated and skipped for every user. Common causes: an <strong>=</strong> operator used where a limit was intended (use <strong>&le;</strong>/<strong>&ge;</strong> for income or age), rules stricter than every registered profile, or only staff accounts matching (staff accounts are skipped by design).
+                  </p>
+                </div>
+              </div>
+            )
           )}
 
           {error && (

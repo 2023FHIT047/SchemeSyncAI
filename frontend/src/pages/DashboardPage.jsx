@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { schemeApi } from '../api/schemeApi';
+import { documentsApi } from '../api/documentsApi';
+import { getDocTypeMeta } from '../constants/documentTypes';
 import { SchemeCard } from '../components/SchemeCard';
 import { DocumentScanner } from '../components/DocumentScanner';
-import { User, Bookmark, Edit3, Save, X } from 'lucide-react';
+import { ProfileCompletionCard } from '../components/ProfileCompletionCard';
+import { User, Bookmark, Edit3, Save, X, FolderOpen, Trash2, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 
 export const DashboardPage = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -11,12 +14,55 @@ export const DashboardPage = () => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [vaultDocs, setVaultDocs] = useState([]);
+  const [vaultLoading, setVaultLoading] = useState(true);
+  const [expandedVaultId, setExpandedVaultId] = useState(null);
 
   useEffect(() => {
     if (profile) {
       setFormData(profile);
     }
   }, [profile]);
+
+  const loadVault = async () => {
+    try {
+      setVaultLoading(true);
+      const res = await documentsApi.getMyDocuments();
+      setVaultDocs(res.results || []);
+    } catch (err) {
+      console.error("Failed to load document vault:", err);
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadVault();
+  }, []);
+
+  const handleDeleteDocument = async (doc) => {
+    const meta = getDocTypeMeta(doc.document_type);
+    if (!window.confirm(`Remove "${meta.label}" from your vault?`)) return;
+    try {
+      await documentsApi.deleteDocument(doc.id);
+      setExpandedVaultId(null);
+      loadVault();
+    } catch (err) {
+      console.error("Failed to delete document:", err);
+    }
+  };
+
+  const handleViewDocument = async (doc) => {
+    try {
+      const blob = await documentsApi.getDocumentFile(doc.id);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error("Failed to open document file:", err);
+      alert("Could not open the stored file for this document.");
+    }
+  };
 
   const loadSaved = async () => {
     try {
@@ -70,6 +116,8 @@ export const DashboardPage = () => {
         <h1>Citizen Dashboard</h1>
         <p>Manage your personal profile and saved government welfare schemes.</p>
       </div>
+
+      <ProfileCompletionCard compact />
 
       {/* Top Section: Profile + OCR Scanner side by side */}
       <div className="dashboard-top-grid">
@@ -189,7 +237,94 @@ export const DashboardPage = () => {
         </div>
 
         {/* OCR Document Scanner - gets proper width now */}
-        <DocumentScanner onProfileUpdate={handleOCRProfileUpdate} />
+        <DocumentScanner onProfileUpdate={handleOCRProfileUpdate} onScanSaved={loadVault} />
+      </div>
+
+      {/* Document Vault - My Documents */}
+      <div style={{ marginTop: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <FolderOpen style={{ width: '1.15rem', height: '1.15rem', color: 'var(--primary-600)' }} />
+          My Documents
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-500)', background: 'var(--gray-100)', padding: '0.15rem 0.55rem', borderRadius: '9999px' }}>
+            {vaultDocs.length}
+          </span>
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+          The original file of every document you scan is stored here, along with its extracted details. Scheme pages use this vault to show which required documents you already have.
+        </p>
+
+        {vaultLoading ? (
+          <div className="empty-state" style={{ padding: '2rem' }}>
+            <div className="loading-spinner"></div>
+          </div>
+        ) : vaultDocs.length === 0 ? (
+          <div className="empty-state">
+            <FolderOpen style={{ width: '2.5rem', height: '2.5rem', color: 'var(--gray-300)', marginBottom: '1rem' }} />
+            <h3 style={{ fontSize: '1.05rem', marginBottom: '0.5rem' }}>Your vault is empty</h3>
+            <p style={{ color: 'var(--gray-600)', fontSize: '0.875rem' }}>
+              Scan your first document above — it will be stored here and counted for scheme readiness.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {vaultDocs.map(doc => {
+              const meta = getDocTypeMeta(doc.document_type);
+              const isExpanded = expandedVaultId === doc.id;
+              const fields = Object.entries(doc.extracted_data || {}).filter(
+                ([key, value]) => key !== 'document_type' && value && typeof value !== 'object'
+              );
+              return (
+                <div key={doc.id} className="vault-item">
+                  <div
+                    className="vault-item-main"
+                    onClick={() => setExpandedVaultId(isExpanded ? null : doc.id)}
+                  >
+                    <span className="vault-item-icon">{meta.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className="vault-item-label">{meta.label}</p>
+                      <p className="vault-item-file">
+                        {doc.file_name || 'Scanned document'}
+                        {doc.updated_at && ` · Updated ${new Date(doc.updated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                      </p>
+                    </div>
+                    <span className="vault-item-status">In Vault</span>
+                    {isExpanded ? <ChevronUp style={{ width: '1rem', height: '1rem', color: 'var(--gray-400)' }} /> : <ChevronDown style={{ width: '1rem', height: '1rem', color: 'var(--gray-400)' }} />}
+                    {doc.has_file && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleViewDocument(doc); }}
+                        className="vault-view-btn"
+                        title="View original file"
+                      >
+                        <Eye style={{ width: '0.9rem', height: '0.9rem' }} />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc); }}
+                      className="vault-delete-btn"
+                      title="Remove from vault"
+                    >
+                      <Trash2 style={{ width: '0.9rem', height: '0.9rem' }} />
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <div className="vault-item-fields">
+                      {fields.length === 0 ? (
+                        <p style={{ fontSize: '0.8rem', color: 'var(--gray-500)', margin: 0 }}>No structured fields extracted from this document.</p>
+                      ) : (
+                        fields.map(([key, value]) => (
+                          <div key={key} className="vault-field-row">
+                            <span>{key.replace(/_/g, ' ')}</span>
+                            <span>{Array.isArray(value) ? value.join(', ') : String(value)}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Saved Schemes - Full Width Below */}

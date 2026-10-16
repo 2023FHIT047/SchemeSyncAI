@@ -30,6 +30,7 @@ backend/.env
 # ========================
 node_modules/
 frontend/dist/
+frontend/dev-dist/
 frontend/.cache/
 *.local
 

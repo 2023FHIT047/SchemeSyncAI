@@ -58,6 +58,7 @@ class GovernmentScheme(models.Model):
     detailed_description = models.TextField(blank=True, default='')
     objective = models.TextField(blank=True, default='')
     benefits = models.TextField()
+    application_process = models.TextField(blank=True, default='', help_text="Step-by-step application process (markdown)")
     
     benefit_type = models.CharField(max_length=30, choices=BENEFIT_TYPE_CHOICES, default='FINANCIAL')
     benefit_amount = models.CharField(max_length=255, blank=True, default='', help_text="e.g. ₹6,000 / year or 100% Fee Waiver")

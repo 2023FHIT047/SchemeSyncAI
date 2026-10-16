@@ -37,6 +37,7 @@ def deep_unescape(text):
         result = html.unescape(result)
         if result == prev:
             break
+    result = re.sub(r'<br\s*/?>', '\n', result, flags=re.IGNORECASE)
     return result.strip()
 
 # -- Django setup -----------------------------------------------------------
@@ -62,6 +63,8 @@ API_BASE = "https://api.myscheme.gov.in"
 SEARCH_URL = f"{API_BASE}/search/v6/schemes"
 DETAIL_URL = f"{API_BASE}/schemes/v6/public/schemes"
 PORTAL = "https://www.myscheme.gov.in"
+# myScheme website proxy to the official API Setu scheme documents endpoint.
+APISETU_DOCS_URL = f"{PORTAL}/api/apisetu/schemes"
 
 # API key embedded in the public myScheme frontend JS.
 # To get an official key, register at https://apisetu.gov.in/
@@ -75,6 +78,13 @@ HEADERS = {
     "Accept": "application/json",
     "User-Agent": "Mozilla/5.0 (compatible; GovSchemePlatform/1.0)",
     "Origin": PORTAL,
+    "Referer": f"{PORTAL}/",
+}
+
+# Headers for the website (non-API-keyed) endpoints.
+WEB_HEADERS = {
+    "Accept": "application/json",
+    "User-Agent": "Mozilla/5.0 (compatible; GovSchemePlatform/1.0)",
     "Referer": f"{PORTAL}/",
 }
 
@@ -159,17 +169,90 @@ def extract_benefit_amount(benefits_text):
     return ""
 
 
-def parse_documents(documents_text):
-    """Parse the documents string into a list of clean document names."""
-    if not documents_text:
+# Canonical document names (aligned with the vault readiness keyword map)
+# and the free-text patterns that indicate a scheme needs them.
+CANONICAL_DOCUMENTS = [
+    ("Aadhaar Card", r"aadha?ar|\buidai\b"),
+    ("PAN Card", r"\bpan card\b|\bpan\b"),
+    ("Income Certificate", r"income certificate|income proof"),
+    ("Caste Certificate", r"caste certificate|caste"),
+    ("Domicile / Residence Certificate", r"domicile|residence certificate|address proof|proof of address"),
+    ("Ration Card", r"ration card|\bbpl card\b"),
+    ("Bank Passbook / Account Details", r"bank passbook|passbook|bank account|bank details"),
+    ("Land Records (7/12 Extract / Khatauni)", r"land records?|7[/-]12|khatauni|jamabandi|patta\b|land ownership|landholding|land holding|land papers|land documents?"),
+    ("Birth Certificate", r"birth certificate"),
+    ("Disability Certificate", r"disability|\budid\b"),
+    ("Education Marksheet / Certificate", r"marksheet|mark sheet|10th|12th|passing certificate|degree certificate"),
+    ("Voter ID Card", r"voter id|\bepic\b"),
+    ("Driving Licence", r"driving licen[cs]e"),
+]
+
+
+def extract_documents(text):
+    """Extract canonical required-document names mentioned in free text.
+
+    Used as a fallback when the official documents list is unavailable, and
+    to condense long sentence-style document entries.
+    """
+    if not text:
         return []
+    found = []
+    for name, pattern in CANONICAL_DOCUMENTS:
+        if re.search(pattern, text, re.IGNORECASE):
+            found.append(name)
+    return found
+
+
+def _rich_text(node):
+    """Flatten a myScheme rich-text node into plain text."""
+    if isinstance(node, dict):
+        if isinstance(node.get("text"), str):
+            return node["text"]
+        return " ".join(_rich_text(c) for c in node.get("children", []))
+    if isinstance(node, list):
+        return " ".join(_rich_text(c) for c in node)
+    return ""
+
+
+def parse_documents_required(blocks):
+    """Convert the official documents_required rich text into document names.
+
+    Short entries are kept verbatim (they are real document names); longer
+    sentence-style entries are condensed to canonical names.
+    """
+    lines = []
+    for block in blocks or []:
+        if not isinstance(block, dict):
+            continue
+        btype = block.get("type", "")
+        if btype.startswith("heading"):
+            continue
+        if btype in ("ol_list", "ul_list"):
+            for child in block.get("children", []):
+                if isinstance(child, dict) and child.get("type") == "list_item":
+                    lines.append(_rich_text(child))
+        else:
+            lines.append(_rich_text(block))
+
     docs = []
-    for chunk in re.split(r'\n\s*[\d.\-]|\.\s+(?=[A-Z])', str(documents_text)):
-        chunk = re.sub(r'[\[\(].*?[\]\)]', '', chunk).strip().strip('.').strip()
-        chunk = re.sub(r'^[\d.\s]+', '', chunk).strip()
-        if chunk and 3 < len(chunk) < 200:
-            docs.append(chunk)
-    return docs
+    for line in lines:
+        clean = re.sub(r"^\s*\d+[.)\t]\s*", "", line).strip()
+        clean = re.sub(r"\s+", " ", clean).strip(". ")
+        if not clean:
+            continue
+        if len(clean) <= 60:
+            docs.append(clean)
+        else:
+            docs.extend(extract_documents(clean))
+
+    seen = set()
+    unique = []
+    for doc in docs:
+        key = doc.lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(doc)
+    return unique[:15]
 
 
 def parse_eligibility_rules(eligibility_text):
@@ -286,6 +369,28 @@ def fetch_detail(slug):
     return payload.get("data")
 
 
+def fetch_documents_required(scheme_internal_id):
+    """Fetch the official documents_required rich text for a scheme."""
+    if not scheme_internal_id:
+        return None
+    url = f"{APISETU_DOCS_URL}/{scheme_internal_id}/documents?lang=en"
+    try:
+        resp = requests.get(url, headers=WEB_HEADERS, timeout=45)
+    except requests.RequestException as exc:
+        log.warning("Documents fetch failed for '%s': %s", scheme_internal_id, exc)
+        return None
+    if resp.status_code != 200:
+        log.warning("Documents HTTP %s for '%s'", resp.status_code, scheme_internal_id)
+        return None
+    try:
+        payload = resp.json()
+    except ValueError:
+        return None
+    if payload.get("status") != "Success":
+        return None
+    return ((payload.get("data") or {}).get("en") or {}).get("documents_required")
+
+
 # -- Import logic -----------------------------------------------------------
 
 def import_from_detail(scheme_data, slug):
@@ -300,18 +405,12 @@ def import_from_detail(scheme_data, slug):
     content = en.get("schemeContent") or {}
     elig = en.get("eligibilityCriteria") or {}
 
-    # applicationProcess comes as a list of dicts from the API (e.g.
-    # [{mode, url, process, process_md}, ...])
-    _app_proc_raw = en.get("applicationProcess") or []
-    app_proc = (
-        _app_proc_raw[0]
-        if isinstance(_app_proc_raw, list)
-        and _app_proc_raw
-        and isinstance(_app_proc_raw[0], dict)
-        else _app_proc_raw
-        if isinstance(_app_proc_raw, dict)
-        else {}
-    )
+    # applicationProcess comes as a list of dicts from the API — one entry
+    # per mode, e.g. [{mode, url, process, process_md}, ...]
+    raw_procs = en.get("applicationProcess") or []
+    if isinstance(raw_procs, dict):
+        raw_procs = [raw_procs]
+    proc_entries = [e for e in raw_procs if isinstance(e, dict)] if isinstance(raw_procs, list) else []
 
     categories = basic.get("schemeCategory") or []
     category = map_category(categories)
@@ -354,29 +453,64 @@ def import_from_detail(scheme_data, slug):
 
     short_desc = str(brief_desc or detailed_desc or basic.get("schemeName", slug))[:500]
 
+    # -- Application process (markdown), one section per mode --
+    proc_sections = []
+    modes = set()
+    for entry in proc_entries:
+        mode_label = deep_unescape(str(entry.get("mode") or "")).strip()
+        if mode_label:
+            modes.add(mode_label.lower())
+        proc_md = deep_unescape(str(entry.get("process_md") or "")).strip()
+        if not proc_md:
+            continue
+        if len(proc_entries) > 1 and mode_label:
+            proc_sections.append(f"### {mode_label} Mode\n\n{proc_md}")
+        else:
+            proc_sections.append(proc_md)
+    application_process = "\n\n".join(proc_sections)[:8000]
+
+    if "online" in modes and "offline" in modes:
+        application_mode = "HYBRID"
+    elif "offline" in modes:
+        application_mode = "OFFLINE"
+    else:
+        application_mode = "ONLINE"
+
     eligibility_text = elig.get("eligibilityDescription_md") or elig.get("eligibilityDescription", "")
     if isinstance(eligibility_text, list):
         eligibility_text = " ".join(str(e) for e in eligibility_text)
     eligibility_text = str(eligibility_text)
 
-    # Documents — applicationProcess may have documents_md, process_md, or documents
-    documents_text = (
-        app_proc.get("documents_md")
-        or app_proc.get("process_md")
-        or app_proc.get("documents", "")
-    )
-    if isinstance(documents_text, list):
-        documents_text = " ".join(str(d) for d in documents_text)
-    documents_text = str(documents_text)
+    # Documents — prefer the official "Documents Required" list from
+    # myScheme (API Setu endpoint); fall back to documents mentioned in the
+    # process / description text when the official list is unavailable.
+    dr_blocks = fetch_documents_required(scheme_data.get("_id"))
+    docs = parse_documents_required(dr_blocks) if dr_blocks else []
+    if not docs:
+        doc_corpus_parts = [application_process, str(detailed_desc), str(brief_desc)]
+        for entry in proc_entries:
+            for key in ("documents_md", "documents"):
+                val = entry.get(key)
+                if isinstance(val, list):
+                    val = "\n".join(str(v) for v in val)
+                if val:
+                    doc_corpus_parts.append(str(val))
+        docs = extract_documents("\n".join(doc_corpus_parts))
 
-    # Application link from references
+    # Application link — prefer the direct apply URL from applicationProcess
     application_link = f"{PORTAL}/schemes/{slug}"
-    references = content.get("references") or []
-    if isinstance(references, list):
-        for ref in references:
-            if isinstance(ref, dict) and ref.get("url"):
-                application_link = ref["url"]
-                break
+    for entry in proc_entries:
+        url = str(entry.get("url") or "").strip()
+        if url.startswith("http"):
+            application_link = deep_unescape(url)
+            break
+    if application_link == f"{PORTAL}/schemes/{slug}":
+        references = content.get("references") or []
+        if isinstance(references, list):
+            for ref in references:
+                if isinstance(ref, dict) and ref.get("url"):
+                    application_link = ref["url"]
+                    break
 
     # Scheme status
     status_obj = basic.get("schemeStatus") or {}
@@ -420,9 +554,10 @@ def import_from_detail(scheme_data, slug):
             "detailed_description": deep_unescape(str(detailed_desc)[:5000]),
             "objective": deep_unescape(short_desc)[:2000],
             "benefits": deep_unescape(benefits[:5000]),
+            "application_process": application_process,
             "benefit_type": benefit_type,
             "benefit_amount": deep_unescape(benefit_amount),
-            "application_mode": "ONLINE",
+            "application_mode": application_mode,
             "application_link": application_link,
             "official_website": f"{PORTAL}/schemes/{slug}",
             "scheme_status": status_map.get(status_label, "ACTIVE"),
@@ -447,13 +582,12 @@ def import_from_detail(scheme_data, slug):
 
     # -- RequiredDocument records --
     scheme.required_documents.all().delete()
-    docs = parse_documents(documents_text)
     for doc_name in docs:
         RequiredDocument.objects.create(
             scheme=scheme,
-            document_name=deep_unescape(doc_name),
+            document_name=doc_name,
             is_mandatory=True,
-            description=f"Required for {scheme.scheme_name}",
+            description="",
         )
 
     return created

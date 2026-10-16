@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { schemeApi } from '../api/schemeApi';
 import { eligibilityApi } from '../api/eligibilityApi';
+import { documentsApi } from '../api/documentsApi';
+import { getDocTypeMeta } from '../constants/documentTypes';
 import { useAuth } from '../context/AuthContext';
 import { EligibilityBadge } from '../components/EligibilityBadge';
 import { FormattedText } from '../components/FormattedText';
 import {
   Building2, ExternalLink, ShieldCheck, FileCheck, ArrowLeft, Bookmark,
-  PhoneCall, Mail, MapPin, Tag, Banknote, Calendar, Globe, Award
+  PhoneCall, Mail, MapPin, Tag, Banknote, Calendar, Globe, Award,
+  ClipboardCheck, CheckCircle2, XCircle, FolderOpen, ListOrdered, Info
 } from 'lucide-react';
 
 export const SchemeDetailPage = () => {
@@ -20,6 +23,8 @@ export const SchemeDetailPage = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [downloadingCert, setDownloadingCert] = useState(false);
   const [certError, setCertError] = useState('');
+  const [readiness, setReadiness] = useState(null);
+  const [readinessLoading, setReadinessLoading] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -30,6 +35,12 @@ export const SchemeDetailPage = () => {
         setIsSaved(data.is_saved || false);
 
         if (user) {
+          setReadinessLoading(true);
+          documentsApi.getSchemeReadiness(schemeId)
+            .then(setReadiness)
+            .catch((e) => console.error("Failed to load document readiness:", e))
+            .finally(() => setReadinessLoading(false));
+
           setEvaluating(true);
           try {
             const evalRes = await eligibilityApi.evaluateScheme(schemeId);
@@ -333,8 +344,25 @@ export const SchemeDetailPage = () => {
                 ))}
               </div>
             ) : (
-              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem' }}>
-                Aadhaar Card and Bank Passbook required for general verification.
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                The exact documents required for this scheme are listed in the application
+                process below and on the official portal.
+              </p>
+            )}
+          </div>
+
+          {/* Application Process */}
+          <div className="scheme-section-card">
+            <h2 className="scheme-section-title">
+              <ListOrdered style={{ width: '1.15rem', height: '1.15rem', color: 'var(--primary-600)' }} />
+              How to Apply — Step by Step
+            </h2>
+            {scheme.application_process ? (
+              <FormattedText text={scheme.application_process} />
+            ) : (
+              <p style={{ color: 'var(--gray-600)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                The detailed application steps for this scheme are published on the official
+                portal — use the "Go to Official Portal" link to view the latest process.
               </p>
             )}
           </div>
@@ -459,6 +487,120 @@ export const SchemeDetailPage = () => {
                 <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>
                   Complete your profile to check eligibility.
                 </p>
+              )}
+            </div>
+          )}
+
+          {/* Document Readiness (for logged-in users) */}
+          {user && (readinessLoading || (readiness && readiness.has_required_documents)) && (
+            <div className="scheme-sidebar-card">
+              <h3 style={{ fontSize: '0.95rem', marginBottom: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <ClipboardCheck style={{ width: '1rem', height: '1rem', color: 'var(--primary-600)' }} />
+                Document Readiness
+              </h3>
+              {readinessLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--gray-500)', fontSize: '0.85rem' }}>
+                  <div className="loading-spinner" style={{ width: '1.25rem', height: '1.25rem', borderWidth: '2px' }}></div>
+                  Checking your vault...
+                </div>
+              ) : (
+                <div>
+                  {readiness.total_count > 0 ? (
+                    (() => {
+                      const pct = Math.round((readiness.ready_count / readiness.total_count) * 100);
+                      return (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--gray-600)', fontWeight: 600 }}>
+                              {readiness.ready_count} of {readiness.total_count} documents ready
+                            </span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: readiness.is_application_ready ? '#047857' : 'var(--primary-700)' }}>
+                              {pct}%
+                            </span>
+                          </div>
+                          <div className="readiness-bar">
+                            <div
+                              className="readiness-bar-fill"
+                              style={{ width: `${pct}%`, background: readiness.is_application_ready ? 'var(--accent-emerald)' : 'var(--primary-600)' }}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', lineHeight: 1.5 }}>
+                      This scheme's checklist has no vault-trackable documents — review the list below before applying.
+                    </p>
+                  )}
+
+                  {readiness.manual_count > 0 && (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--gray-400)', marginTop: '0.55rem', lineHeight: 1.45 }}>
+                      {readiness.manual_count === 1
+                        ? '1 checklist item has no vault equivalent — marked “Manual” below.'
+                        : `${readiness.manual_count} checklist items have no vault equivalent — marked “Manual” below.`}
+                    </p>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.9rem' }}>
+                    {readiness.documents.map(doc => {
+                      const meta = doc.matched_type ? getDocTypeMeta(doc.matched_type) : null;
+                      return (
+                        <div key={doc.required_document_id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                          {doc.is_ready ? (
+                            <CheckCircle2 style={{ width: '1rem', height: '1rem', color: 'var(--accent-emerald)', flexShrink: 0, marginTop: '0.1rem' }} />
+                          ) : doc.is_trackable ? (
+                            <XCircle style={{ width: '1rem', height: '1rem', color: 'var(--gray-300)', flexShrink: 0, marginTop: '0.1rem' }} />
+                          ) : (
+                            <Info style={{ width: '1rem', height: '1rem', color: 'var(--gray-400)', flexShrink: 0, marginTop: '0.1rem' }} />
+                          )}
+                          <span style={{ flex: 1, fontSize: '0.82rem', lineHeight: 1.4, color: doc.is_ready ? 'var(--gray-700)' : 'var(--gray-600)', minWidth: 0 }}>
+                            {doc.document_name}
+                            {!doc.is_mandatory && <span style={{ fontSize: '0.68rem', color: 'var(--gray-400)', marginLeft: '0.35rem' }}>(optional)</span>}
+                            {doc.is_trackable && (
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--gray-400)', marginTop: '0.1rem' }}>
+                                {doc.is_ready ? `Matched: ${meta.label}` : `Scan your ${meta.label}`}
+                              </span>
+                            )}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, flexShrink: 0, marginTop: '0.08rem', color: doc.is_ready ? '#047857' : doc.is_trackable ? '#b45309' : 'var(--gray-400)' }}>
+                            {doc.is_ready ? 'In vault' : doc.is_trackable ? 'Missing' : 'Manual'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {readiness.is_application_ready ? (
+                    <div style={{ marginTop: '1rem', padding: '0.75rem 0.9rem', background: 'var(--accent-emerald-light)', border: '1px solid #a7f3d0', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: '#065f46', fontWeight: 600, lineHeight: 1.5 }}>
+                      All vault-trackable mandatory documents are ready — you can apply with confidence.
+                      {readiness.manual_count > 0 && ' Arrange the “Manual” items as per the scheme instructions.'}
+                    </div>
+                  ) : readiness.mandatory_total > 0 ? (
+                    <>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--gray-500)', marginTop: '1rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                        Scan the missing documents to complete your application checklist.
+                      </p>
+                      <Link to="/dashboard" className="btn btn-secondary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                        <FolderOpen style={{ width: '0.85rem', height: '0.85rem' }} />
+                        Open Document Vault
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--gray-500)', marginTop: '1rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                        {readiness.manual_count > 0
+                          ? 'Some checklist items live outside your vault — arrange the “Manual” items as per the scheme instructions.'
+                          : 'Scan your documents to keep your checklist complete.'}
+                      </p>
+                      {readiness.total_count > 0 && (
+                        <Link to="/dashboard" className="btn btn-secondary btn-sm" style={{ width: '100%', justifyContent: 'center' }}>
+                          <FolderOpen style={{ width: '0.85rem', height: '0.85rem' }} />
+                          Open Document Vault
+                        </Link>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           )}
